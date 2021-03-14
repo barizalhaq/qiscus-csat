@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="shortcut icon" href="https://www.qiscus.com/images/faveicon.png" />
+    <link rel="stylesheet" href="https://bootswatch.com/4/flatly/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-bar-rating/1.2.1/themes/fontawesome-stars.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-bar-rating/1.2.1/themes/bars-reversed.min.css">
+    <style>
+      {% if 'color' in extras %}
+        :root {
+          --color: {{extras['color']}};
+        }
+      {% else %}
+        :root {
+          --color: #005791;
+        }
+      {% endif %}
+
+      body {
+        background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+          url({{extras['background']}}) no-repeat center center fixed;
+        -webkit-background-size: cover;
+        -moz-background-size: cover;
+        -o-background-size: cover;
+        background-size: cover;
+      }
+      .br-theme-fontawesome-stars .br-widget a {
+        display: block;
+        width: 40px;
+        height: 40px;
+        float: left;
+        margin: 3px;
+        font-size: 35px;
+        line-height: 2;
+      }
+      .br-theme-bars-square .br-widget a {
+        border-radius: 50%;
+        display: block;
+        width: 40px;
+        height: 40px;
+        float: left;
+        border: 2px solid var(--color);
+        background-color: white;
+        margin: 3px;
+        text-decoration: none;
+        font-size: 17px;
+        font-weight: 400;
+        line-height: 2;
+        text-align: center;
+        color: var(--color);
+        font-weight: 600;
+      }
+      .br-theme-bars-square .br-widget a.br-active,
+      .br-theme-bars-square .br-widget a.br-selected {
+        color: white;
+        background-color: var(--color);
+      }
+      .btn-primary {
+        color: #fff;
+        background-color: var(--color);
+        border-color: var(--color);
+      }
+    </style>
+    <title>{{csat.app.app_name}} Csat</title>
+  </head>
+  <body>
+    <div class="container">{% block main %}{% endblock %}</div>
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js"
+      integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
+      integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jquery-bar-rating/1.2.2/jquery.barrating.min.js"
+      integrity="sha512-nUuQ/Dau+I/iyRH0p9sp2CpKY9zrtMQvDUG7iiVY8IBMj8ZL45MnONMbgfpFAdIDb7zS5qEJ7S056oE7f+mCXw=="
+      crossorigin="anonymous"
+    ></script>
+    {% block script %}{% endblock %}
+  </body>
+</html>
