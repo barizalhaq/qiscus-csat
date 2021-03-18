@@ -76,7 +76,7 @@ class Config(BaseModel):
     csat_msg = db.Column(db.String, nullable=False)
     rating_type = db.Column(db.Enum(RatingType), nullable=False)
     rating_total = db.Column(db.Integer, nullable=False)
-    extras = db.Column(db.String, nullable=False)
+    extras = db.Column(db.String, nullable=True)
 
     app_id = db.Column(db.Integer, db.ForeignKey("apps.id"), nullable=False)
     app = db.relationship("App", backref=backref("config", uselist=False))

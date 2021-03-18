@@ -40,6 +40,7 @@ def create_app_config():
 
     rating_type = RatingType.STAR if data['rating_type'] == 'star' else RatingType.NUMBER # noqa
     official_web = data['official_web'] if 'official_web' in data else None
+    extras = json.dumps(data['extras']) if 'extras' in data else None
 
     # insert data app and csat configuration
     try:
@@ -57,7 +58,7 @@ def create_app_config():
             csat_msg=data['csat_msg'],
             rating_type=rating_type,
             rating_total=data['rating_total'],
-            extras=json.dumps(data['extras']),
+            extras=extras,
             app_id=app.id)
 
         db.session.add(config)
@@ -179,13 +180,15 @@ def csat_submit():
         flash(error_msg)
         return redirect('/csat/{csat_code}'.format(csat_code=csat_code))
 
-    extras = json.loads(csat.app.config.extras)
+    # feedback field validation -> rating_min_fb (extras)
+    if csat.app.config.extras:
+        extras = json.loads(csat.app.config.extras)
 
-    if 'rating_min_fb' in extras:
-        # feedback field validation
-        if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "":
-            flash(error_msg)
-            return redirect('/csat/{csat_code}'.format(csat_code=csat_code))
+        if 'rating_min_fb' in extras:
+            if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "": # noqa
+                flash(error_msg)
+                return redirect(
+                    '/csat/{csat_code}'.format(csat_code=csat_code))
 
     csat.rating = int(rating)
     csat.feedback = None if feedback.strip() == "" else feedback.strip()
@@ -199,7 +202,7 @@ def csat_submit():
 
 
 def _set_default_extras(extras):
-    ce = json.loads(extras)
+    ce = json.loads(extras) if extras else json.loads('{}')
     extras = {}
     extras['background'] = ce['background'] if 'background' in ce else ''
     extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0 # noqa
