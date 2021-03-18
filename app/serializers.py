@@ -22,7 +22,7 @@ class AppConfigSchema(Schema):
     rating_type = fields.String(
         validate=validate.OneOf(['star', 'number']), required=True)
     rating_total = fields.Integer(required=True)
-    extras = fields.Nested(ConfigExtrasSchema, required=True)
+    extras = fields.Nested(ConfigExtrasSchema)
 
 
 app_config_schema = AppConfigSchema()
