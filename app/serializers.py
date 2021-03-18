@@ -2,8 +2,10 @@ from marshmallow import Schema, fields, validate
 
 
 class ConfigExtrasSchema(Schema):
-    background = fields.URL(required=True)
-    logo = fields.URL(required=True)
+    background = fields.URL()
+    background_transparancy = fields.Integer()
+    font_color = fields.String()
+    logo = fields.URL()
     color = fields.String()
     rating_min_fb = fields.Integer()
 

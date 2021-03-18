@@ -153,10 +153,20 @@ def csat_form(csat_code):
         else:
             return redirect('https://qiscus.com')
 
+    # set extras for layouting extras
+    ce = json.loads(csat.app.config.extras)
+    extras = {}
+    extras['background'] = ce['background'] if 'background' in ce else ''
+    extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0 # noqa
+    extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000' # noqa
+    extras['logo'] = ce['logo'] if 'logo' in ce else ''
+    extras['color'] = ce['color'] if 'color' in ce else '#005791'
+    if 'rating_min_fb' in ce:
+        extras['rating_min_fb'] = ce['rating_min_fb']
+
     return render_template(
         'csat.html',
-        csat=csat,
-        extras=json.loads(csat.app.config.extras))
+        csat=csat, extras=extras)
 
 
 @web.route('/csat', methods=['POST'])

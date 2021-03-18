@@ -9,23 +9,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-bar-rating/1.2.1/themes/fontawesome-stars.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-bar-rating/1.2.1/themes/bars-reversed.min.css">
     <style>
-      {% if 'color' in extras %}
-        :root {
+
+      :root {
           --color: {{extras['color']}};
-        }
-      {% else %}
-        :root {
-          --color: #005791;
-        }
-      {% endif %}
+      }
 
       body {
-        background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)),
+        background: linear-gradient(rgba(255, 255, 255, {{extras['background_transparancy']}}), rgba(255, 255, 255, {{extras['background_transparancy']}})),
           url({{extras['background']}}) no-repeat center center fixed;
         -webkit-background-size: cover;
         -moz-background-size: cover;
         -o-background-size: cover;
         background-size: cover;
+        color: {{extras['font_color']}}
       }
       .br-theme-fontawesome-stars .br-widget a {
         display: block;
