@@ -4,4 +4,4 @@ pipelines:
       - step:
           name: Deploy develop branch to heroku
           script:
-            - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/btpn-crm-stg.git HEAD:master
+            - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/qismo-csat-stag.git HEAD:master
