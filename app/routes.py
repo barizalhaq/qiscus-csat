@@ -128,16 +128,13 @@ def wh_mark_as_resolved(app_code):
     common_ch = {"wa", "qiscus", "telegram", "line", "fb"}
     qismo_source = json_data["service"]["source"]
     if qismo_source not in common_ch:
+        qismo_source = "custom_channel"
         r = multichannel.get_all_channel()
         channels = r.json()["data"]
         if channels.get("custom_channels"):
             custom_channel = next((item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
             if custom_channel:
                 qismo_source = custom_channel["name"]
-            else:
-                qismo_source = "custom_channel"
-        else:
-            qismo_source = "custom_channel"
 
     # store satisfaction data to the database
     csat = Csat(
