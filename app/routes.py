@@ -124,12 +124,27 @@ def wh_mark_as_resolved(app_code):
 
     multichannel.send_bot_message(room_id=room_id, message=msg)
 
+    # filter source
+    common_ch = {"wa", "qiscus", "telegram", "line", "fb"}
+    qismo_source = json_data["service"]["source"]
+    if qismo_source not in common_ch:
+        r = multichannel.get_all_channel()
+        channels = r.json()["data"]
+        if channels.get("custom_channels"):
+            custom_channel = next((item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
+            if custom_channel:
+                qismo_source = custom_channel["name"]
+            else:
+                qismo_source = "custom_channel"
+        else:
+            qismo_source = "custom_channel"
+
     # store satisfaction data to the database
     csat = Csat(
         csat_code=csat_code,
         user_id=json_data["customer"]["user_id"],
         agent_email=json_data["resolved_by"]["email"],
-        source=json_data["service"]["source"],
+        source=qismo_source,
         app_id=app.id)
 
     csat.save()

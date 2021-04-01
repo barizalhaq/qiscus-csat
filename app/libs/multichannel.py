@@ -51,3 +51,13 @@ class Multichannel:
             data=json.dumps(payload))
 
         return r
+
+    def get_all_channel(self):
+        url = "https://qismo.qiscus.com/api/v2/channels"
+
+        r = make_request(
+            method="get",
+            url=url,
+            headers=self.headers())
+
+        return r
