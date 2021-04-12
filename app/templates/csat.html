@@ -9,8 +9,7 @@
 
       <h1 class="text-center mb-3">{{csat.app.app_name}} Customer Satisfaction Survey</h1>
       <h5 class="text-center" style="margin-bottom: 50px">
-        Hanya kurang dari 1 menit, saran dan masukan Bapak/Ibu sangat berarti bagi kami. Berikan penilaian atas pelayanan
-        {{csat.app.app_name}}.
+        Hanya kurang dari 1 menit, saran dan masukan {{csat.app.app_name}} Partner sangat berarti bagi kami untuk terus dapat melakukan peningkatan pelayanan yang lebih baik lagi. Mohon berikan penilaian atas pelayanan {{csat.app.app_name}}.
       </h5>
 
       {% with messages = get_flashed_messages() %}
@@ -29,7 +28,7 @@
       <form method="POST" action="/csat">
         <input type="text" name="csat_code" id="csat_code" value="{{csat.csat_code}}" hidden />
         <h5>
-          Dari skala 1 – {{csat.app.config.rating_total}}, berapa nilai yang Bapak/Ibu berikan atas pelayanan kami? (1 = buruk sekali, {{csat.app.config.rating_total}} = baik sekali)
+          Dari skala 1 – {{csat.app.config.rating_total}}, berapa nilai yang {{csat.app.app_name}} Partner berikan atas keseluruhan pengalaman pelayanan bersama {{csat.app.app_name}} (1 = buruk sekali, {{csat.app.config.rating_total}} = baik sekali)
         </h5>
         <div class="form-group pb-3 pt-3" style="display: flex; justify-content: center">
           <select name="rating" id="rating" autocomplete="off">
@@ -38,7 +37,7 @@
         </div>
 
         <div class="form-group">
-          <h5>Apakah Bapak/Ibu bersedia memberikan masukan atas pelayanan {{csat.app.app_name}} secara keseluruhan?</h5>
+          <h5>Mohon kesediaan {{csat.app.app_name}} Partner untuk memberikan saran perbaikan atas pelayanan {{csat.app.app_name}}.</h5>
           
           {% if 'rating_min_fb' in extras %}
           	<label for="feedback"><i>Jika mengisi nilai 1 – {{extras['rating_min_fb']}}, maka wajib mengisi kolom alasan</i></label>
