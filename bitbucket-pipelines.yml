@@ -1,7 +1,7 @@
 pipelines:
   branches:
-    develop:
+    master:
       - step:
-          name: Deploy develop branch to heroku
+          name: Deploy master branch to heroku
           script:
-            - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/qismocsat-stg.git HEAD:master
+            - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/qismo-csat.git HEAD:master
