@@ -2,10 +2,10 @@ import json
 import uuid
 import datetime
 
-from flask import Blueprint, request, redirect, render_template, flash
+from flask import Blueprint, request, redirect, render_template, flash, jsonify
 from marshmallow import ValidationError
 from http import HTTPStatus
-from .serializers import app_config_schema
+from .serializers import app_config_schema, csat_schema, config_schema
 from .models import App, RatingType, Config, Csat
 from .extensions import db
 from sqlalchemy.exc import SQLAlchemyError
@@ -74,6 +74,7 @@ def create_app_config():
     webhook_url = '{base}/webhook/csat/{app_code}'.format(
         base=base,
         app_code=app.app_code)
+    # webhook_url = 'https://3ef8adcd523a.ngrok.io/webhook/csat/{app_code}'.format(app_code=app.app_code)
 
     multichannel = Multichannel(
         app_code=app.app_code,
@@ -93,6 +94,43 @@ def create_app_config():
         }
     }
 
+@api.route('/csat/<csat_code>/check', methods=['POST'])
+def check(csat_code):
+    csat = Csat.get_by_csat_code(csat_code=csat_code)
+    if not csat:
+        return {
+            'status': HTTPStatus.BAD_REQUEST,
+            'message': 'csat code is invalid'
+        }, HTTPStatus.BAD_REQUEST
+
+    return jsonify({ 'data': { 'csat': csat_schema.dump(csat), 'config': config_schema.dump(csat.app.config) } })
+
+@api.route('/csat/<csat_code>/create', methods=['POST'])
+def submit_survey(csat_code):
+    csat = Csat.get_by_csat_code(csat_code=csat_code)
+    if not csat:
+        return {
+            'status': HTTPStatus.NOT_FOUND,
+            'message': 'csat code is invalid'
+        }, HTTPStatus.NOT_FOUND
+    json_data = request.get_json(force=True)
+    if not json_data["rating"]:
+        err_msg = "Harap berikan penilaian dan ulasan Anda untuk membantu kami memberikan pelayanan yang terbaik"
+        return {
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY,
+            'message': err_msg
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
+
+    csat.rating = json_data["rating"]
+    csat.feedback = json_data["feedback"]
+    csat.submitted_at = datetime.datetime.now()
+    csat.update()
+
+    return {
+        'status': HTTPStatus.CREATED,
+        'message': 'survey created successfully'
+    }, HTTPStatus.CREATED
+
 
 @webhook.route('/csat/<app_code>', methods=['POST'])
 def wh_mark_as_resolved(app_code):
@@ -108,7 +146,13 @@ def wh_mark_as_resolved(app_code):
     config = Config.get_by_app_id(app_id=app.id)
     csat_msg = config.csat_msg
     csat_code = uuid.uuid4().hex
-    csat_url = '{base}csat/{csat_code}'.format(
+    # csat_url = '{base}csat/{csat_code}'.format(
+    #     base=request.url_root,
+    #     csat_code=csat_code)
+    if config.csat_page is not None:
+        csat_url = config.csat_page.format(csat_code=csat_code)
+    else:
+        csat_url = '{base}csat/{csat_code}'.format(
         base=request.url_root,
         csat_code=csat_code)
 
