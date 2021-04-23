@@ -75,7 +75,6 @@ def create_app_config():
     webhook_url = '{base}/webhook/csat/{app_code}'.format(
         base=base,
         app_code=app.app_code)
-    # webhook_url = 'https://3ef8adcd523a.ngrok.io/webhook/csat/{app_code}'.format(app_code=app.app_code)
 
     multichannel = Multichannel(
         app_code=app.app_code,
@@ -147,15 +146,13 @@ def wh_mark_as_resolved(app_code):
     config = Config.get_by_app_id(app_id=app.id)
     csat_msg = config.csat_msg
     csat_code = uuid.uuid4().hex
-    # csat_url = '{base}csat/{csat_code}'.format(
-    #     base=request.url_root,
-    #     csat_code=csat_code)
+
     if config.csat_page is not None:
         csat_url = config.csat_page.format(csat_code=csat_code)
     else:
         csat_url = '{base}csat/{csat_code}'.format(
-        base=request.url_root,
-        csat_code=csat_code)
+            base=request.url_root,
+            csat_code=csat_code)
 
     # inject {link} variable in csat msg
     msg = csat_msg.replace('{link}', csat_url)
@@ -241,13 +238,13 @@ def csat_submit():
     if csat.app.config.extras:
         extras = json.loads(csat.app.config.extras)
 
-        if 'rating_min_fb' in extras:
+        if type(rating) == int and 'rating_min_fb' in extras:
             if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "": # noqa
                 flash(error_msg)
                 return redirect(
                     '/csat/{csat_code}'.format(csat_code=csat_code))
 
-    csat.rating = int(rating)
+    csat.rating = rating
     csat.feedback = None if feedback.strip() == "" else feedback.strip()
     csat.submitted_at = datetime.datetime.now()
     csat.update()
