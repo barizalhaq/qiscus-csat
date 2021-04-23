@@ -38,7 +38,7 @@ def create_app_config():
             'message': 'appid already registered'
         }, HTTPStatus.BAD_REQUEST
 
-    rating_type = RatingType.STAR if data['rating_type'] == 'star' else RatingType.NUMBER # noqa
+    rating_type = RatingType.STAR if data['rating_type'] == 'star' else RatingType.NUMBER if data['rating_type'] == 'number' else RatingType.CUSTOM # noqa
     official_web = data['official_web'] if 'official_web' in data else None
     extras = json.dumps(data['extras']) if 'extras' in data else None
 
@@ -59,7 +59,8 @@ def create_app_config():
             rating_type=rating_type,
             rating_total=data['rating_total'],
             extras=extras,
-            app_id=app.id)
+            app_id=app.id,
+            csat_page=data['csat_page'])
 
         db.session.add(config)
         db.session.commit()

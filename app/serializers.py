@@ -19,9 +19,10 @@ class AppConfigSchema(Schema):
     official_web = fields.URL()
     csat_msg = fields.String(required=True)
     rating_type = fields.String(
-        validate=validate.OneOf(['star', 'number']), required=True)
+        validate=validate.OneOf(['star', 'number', 'custom']), required=True)
     rating_total = fields.Integer(required=True)
     extras = fields.Nested(ConfigExtrasSchema)
+    csat_page = fields.String(required=False)
 
 
 app_config_schema = AppConfigSchema()
