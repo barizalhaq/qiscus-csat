@@ -11,6 +11,11 @@ from .extensions import *
 from .utils.logging import http_request_log
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from flask_cors import CORS
+
+from flask_migrate import Migrate
+migrate = Migrate(compare_type=True)
+
 
 def create_app():
     """
@@ -20,11 +25,13 @@ def create_app():
     :param config_object: The configuration object to use.
     """
     app = Flask(__name__, instance_relative_config=True)
+    CORS(app)
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
     app.config.from_object('config')
 
     # init extensions
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # create tables as per models
     with app.app_context():

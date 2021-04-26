@@ -18,6 +18,7 @@ class Multichannel:
         headers = {}
         headers['Content-Type'] = 'application/json'
         headers['Authorization'] = self.admin_token
+        # headers['Qiscus-App-Id'] = self.app_code
         return headers
 
     def send_bot_message(self, room_id, message):

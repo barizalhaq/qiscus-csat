@@ -1,6 +1,5 @@
 from marshmallow import Schema, fields, validate
 
-
 class ConfigExtrasSchema(Schema):
     background = fields.URL()
     background_transparancy = fields.Integer()
@@ -20,10 +19,25 @@ class AppConfigSchema(Schema):
     official_web = fields.URL()
     csat_msg = fields.String(required=True)
     rating_type = fields.String(
-        validate=validate.OneOf(['star', 'number']), required=True)
+        validate=validate.OneOf(['star', 'number', 'custom']), required=True)
     rating_total = fields.Integer(required=True)
     extras = fields.Nested(ConfigExtrasSchema)
+    csat_page = fields.String(required=False)
 
 
 app_config_schema = AppConfigSchema()
 app_configs_schema = AppConfigSchema(many=True)
+
+class CsatSchema(Schema):
+    class Meta:
+        fields = ('id','csat_code','user_id','rating','feedback','agent_email','source','submitted_at','app_id')
+
+csat_schema = CsatSchema()
+csats_schema = CsatSchema(many=True)
+
+class Config(Schema):
+    rating_type = fields.String()
+    class Meta:
+        fields = ('official_web','csat_msg','rating_total','extras','csat_page','rating_type')
+
+config_schema = Config()
