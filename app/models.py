@@ -51,6 +51,7 @@ class BaseModel(db.Model):
 class RatingType(enum.Enum):
     STAR = 1
     NUMBER = 2
+    CUSTOM = 3
 
 
 class App(BaseModel):
@@ -77,6 +78,7 @@ class Config(BaseModel):
     rating_type = db.Column(db.Enum(RatingType), nullable=False)
     rating_total = db.Column(db.Integer, nullable=False)
     extras = db.Column(db.String, nullable=True)
+    csat_page = db.Column(db.String, nullable=True)
 
     app_id = db.Column(db.Integer, db.ForeignKey("apps.id"), nullable=False)
     app = db.relationship("App", backref=backref("config", uselist=False))
@@ -94,7 +96,7 @@ class Csat(BaseModel):
 
     csat_code = db.Column(db.String, nullable=False)
     user_id = db.Column(db.String, nullable=False)
-    rating = db.Column(db.Integer, nullable=True)
+    rating = db.Column(db.String, nullable=True)
     feedback = db.Column(db.String, nullable=True)
     agent_email = db.Column(db.String, nullable=False)
     source = db.Column(db.String, nullable=False)
