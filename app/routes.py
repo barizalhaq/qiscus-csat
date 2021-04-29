@@ -147,7 +147,7 @@ def wh_mark_as_resolved(app_code):
     csat_msg = config.csat_msg
     csat_code = uuid.uuid4().hex
 
-    if config.csat_page is not None:
+    if config.rating_type == RatingType.CUSTOM and len(config.csat_page) > 0:
         csat_url = config.csat_page.format(csat_code=csat_code)
     else:
         csat_url = '{base}csat/{csat_code}'.format(
