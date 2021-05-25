@@ -168,7 +168,7 @@ def csat_form(csat_code):
 
     return render_template(
         'csat.html',
-        csat=csat, extras=_set_default_extras(csat.app.config.extras))
+        csat=csat, extras=_set_default_extras(csat.app.config.extras, csat.app))
 
 
 @web.route('/csat', methods=['POST'])
@@ -210,10 +210,10 @@ def csat_submit():
     return render_template(
         'closing.html',
         csat=csat,
-        extras=_set_default_extras(csat.app.config.extras))
+        extras=_set_default_extras(csat.app.config.extras, csat.app))
 
 
-def _set_default_extras(extras):
+def _set_default_extras(extras, app):
     ce = json.loads(extras) if extras else json.loads('{}')
     extras = {}
     extras['background'] = ce['background'] if 'background' in ce else ''
@@ -221,7 +221,26 @@ def _set_default_extras(extras):
     extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000' # noqa
     extras['logo'] = ce['logo'] if 'logo' in ce else ''
     extras['color'] = ce['color'] if 'color' in ce else '#005791'
+    extras['enable_redirect'] = True if 'enable_redirect' not in ce else ce['enable_redirect']
+    # extras['emoji_type'] = ce['emoji_type'] if app.config.rating_type == RatingType.EMOJI else ''
     if 'rating_min_fb' in ce:
         extras['rating_min_fb'] = ce['rating_min_fb']
+
+    if 'greetings' in ce:
+        extras['greetings'] = ce['greetings']
+
+    if 'additional_comment_instruction' in ce:
+        extras['additional_comment_instruction'] = ce['additional_comment_instruction']
+
+    if 'custom_comment_wording' in ce:
+        extras['custom_comment_wording'] = ce['custom_comment_wording']
+
+    if 'closing' in ce:
+        extras['closing'] = ce['closing']
+
+    if 'closing_button_text' in ce:
+        extras['closing_button_text'] = ce['closing_button_text']
+
+    extras['disable_rating_instruction'] = 'disable_rating_instruction' in ce
 
     return extras

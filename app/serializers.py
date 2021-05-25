@@ -8,6 +8,13 @@ class ConfigExtrasSchema(Schema):
     logo = fields.URL()
     color = fields.String()
     rating_min_fb = fields.Integer()
+    greetings = fields.String()
+    closing = fields.String()
+    enable_redirect = fields.Boolean()
+    additional_comment_instruction = fields.String()
+    custom_comment_wording = fields.String()
+    closing_button_text = fields.String()
+    disable_rating_instruction = fields.Boolean()
 
 
 class AppConfigSchema(Schema):
