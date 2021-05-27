@@ -15,6 +15,7 @@ class ConfigExtrasSchema(Schema):
     custom_comment_wording = fields.String()
     closing_button_text = fields.String()
     disable_rating_instruction = fields.Boolean()
+    submit_button_text = fields.String()
 
 
 class AppConfigSchema(Schema):
