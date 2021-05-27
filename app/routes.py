@@ -283,6 +283,9 @@ def _set_default_extras(extras, app):
     if 'closing_button_text' in ce:
         extras['closing_button_text'] = ce['closing_button_text']
 
+    if 'submit_button_text' in ce:
+        extras['submit_button_text'] = ce['submit_button_text']
+
     extras['disable_rating_instruction'] = 'disable_rating_instruction' in ce
 
     return extras
