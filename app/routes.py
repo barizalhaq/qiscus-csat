@@ -7,10 +7,12 @@ from marshmallow import ValidationError
 from http import HTTPStatus
 from .serializers import app_config_schema, csat_schema, config_schema
 from .models import App, RatingType, Config, Csat
-from .extensions import db
+from .extensions import db, s3_session
 from sqlalchemy.exc import SQLAlchemyError
 from .libs.multichannel import Multichannel
 from .utils.decorator import superadmin_token_required
+from .utils.enums import EmojiRating
+from .utils.helpers import create_s3_url
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
 webhook = Blueprint("webhook", __name__, url_prefix="/webhook")
@@ -210,12 +212,12 @@ def csat_form(csat_code):
 
     return render_template(
         'csat.html',
-        csat=csat, extras=_set_default_extras(csat.app.config.extras, csat.app))
+        csat=csat, extras=_set_default_extras(csat.app.config.extras, csat.app), emoji_enums=EmojiRating)
 
 
 @web.route('/csat', methods=['POST'])
 def csat_submit():
-    """Customer satisfaction post form hanler."""
+    """Customer satisfaction post form handler."""
 
     csat_code = request.form.get("csat_code")
     rating = request.form.get("rating")
@@ -233,6 +235,13 @@ def csat_submit():
     if rating == "":
         flash(error_msg)
         return redirect('/csat/{csat_code}'.format(csat_code=csat_code))
+
+    if csat.app.config.rating_type == RatingType.EMOJI:
+        if rating != EmojiRating.PUAS.value and rating != EmojiRating.TIDAK_PUAS.value:
+            error_msg = "Rating yang diberikan harus berupa Puas atau Tidak Puas"
+            flash(error_msg)
+            return redirect('/csat/{csat_code}'.format(csat_code=csat_code))
+
 
     # feedback field validation -> rating_min_fb (extras)
     if csat.app.config.extras:
@@ -258,13 +267,22 @@ def csat_submit():
 def _set_default_extras(extras, app):
     ce = json.loads(extras) if extras else json.loads('{}')
     extras = {}
-    extras['background'] = ce['background'] if 'background' in ce else ''
+
+    # csat page media (background n logo)
+    if 'media' in ce:
+        extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.jpg")\
+            if 'background' in ce['media'] else ce['background'] if 'background' in ce else ''
+        extras['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.jpg")\
+            if 'logo' in ce['media'] else ce['logo'] if 'logo' in ce else ''
+    elif 'media' not in ce:
+        extras['background'] = ce['background'] if 'background' in ce else ''
+        extras['logo'] = ce['logo'] if 'logo' in ce else ''
+
     extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0 # noqa
     extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000' # noqa
-    extras['logo'] = ce['logo'] if 'logo' in ce else ''
     extras['color'] = ce['color'] if 'color' in ce else '#005791'
     extras['enable_redirect'] = True if 'enable_redirect' not in ce else ce['enable_redirect']
-    # extras['emoji_type'] = ce['emoji_type'] if app.config.rating_type == RatingType.EMOJI else ''
+    extras['emoji_type'] = ce['emoji_type'] if app.config.rating_type == RatingType.EMOJI else ''
     if 'rating_min_fb' in ce:
         extras['rating_min_fb'] = ce['rating_min_fb']
 

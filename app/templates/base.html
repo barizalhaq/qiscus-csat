@@ -15,8 +15,6 @@
       }
 
       body {
-        background: linear-gradient(rgba(255, 255, 255, {{extras['background_transparancy']}}), rgba(255, 255, 255, {{extras['background_transparancy']}})),
-          url({{extras['background']}}) no-repeat center center fixed;
         -webkit-background-size: cover;
         -moz-background-size: cover;
         -o-background-size: cover;
@@ -59,6 +57,17 @@
         background-color: var(--color);
         border-color: var(--color);
       }
+
+      .btn-rating-negative.active,
+      .btn-rating-negative:hover {
+        background-color: #EAAAAA;
+      }
+
+      .btn-rating-positive.active,
+      .btn-rating-positive:hover {
+        background-color: #BEEEE6;
+      }
+
     </style>
     <title>{{csat.app.app_name}} Csat</title>
   </head>
@@ -84,6 +93,12 @@
       integrity="sha512-nUuQ/Dau+I/iyRH0p9sp2CpKY9zrtMQvDUG7iiVY8IBMj8ZL45MnONMbgfpFAdIDb7zS5qEJ7S056oE7f+mCXw=="
       crossorigin="anonymous"
     ></script>
+    <script>
+      backgroundUrl = new DOMParser().parseFromString('{{extras['background']}}', "text/html")
+
+      document.body.style.background = `linear-gradient(rgba(255, 255, 255, {{extras['background_transparancy']}}),
+        rgba(255, 255, 255, {{extras['background_transparancy']}})),url("${backgroundUrl.documentElement.textContent}") no-repeat center center fixed`
+    </script>
     {% block script %}{% endblock %}
   </body>
 </html>
