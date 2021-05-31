@@ -42,11 +42,12 @@ def upgrade():
 
 def downgrade():
     # Rename current enum type to tmp_
-    op.execute('ALTER TYPE ' + tmp_enum_name + ' RENAME TO ' + enum_name)
+    op.execute('ALTER TYPE ' + enum_name + ' RENAME TO ' + tmp_enum_name)
     # Create new enum type in db
-    new_type.create(op.get_bind())
+    old_type.create(op.get_bind())
     # Update column to use new enum type
-    op.execute('ALTER TABLE audit ALTER COLUMN rating_type TYPE ' + tmp_enum_name + ' USING rating_type::text::' + tmp_enum_name)
+    op.execute(
+        'ALTER TABLE configs ALTER COLUMN rating_type TYPE ' + enum_name + ' USING rating_type::text::' + enum_name)
     # Drop old enum type
-    op.execute('DROP TYPE ' + enum_name)
+    op.execute('DROP TYPE ' + tmp_enum_name)
     pass

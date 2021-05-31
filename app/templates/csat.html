@@ -16,12 +16,8 @@
       yang lebih baik lagi. Mohon berikan penilaian atas pelayanan
       {{csat.app.app_name}}.
     </h5>
-    {% endif %}
-    {% if 'greetings' in extras %}
-    {{ extras['greetings']|safe }}
-    {% endif %}
-
-    {% with messages = get_flashed_messages() %} {% if messages %} {%
+    {% endif %} {% if 'greetings' in extras %} {{ extras['greetings']|safe }} {%
+    endif %} {% with messages = get_flashed_messages() %} {% if messages %} {%
     for message in messages %}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       {{message}}
@@ -154,7 +150,10 @@
         ></textarea>
       </div>
       <div class="form-group" style="display: flex; justify-content: center">
-        <button type="submit" class="btn btn-primary">{{ extras['submit_button_text'] if 'submit_button_text' in extras else 'Kirim Survey' }}</button>
+        <button type="submit" class="btn btn-primary">
+          {{ extras['submit_button_text'] if 'submit_button_text' in extras else
+          'Kirim Survey' }}
+        </button>
       </div>
     </form>
   </div>

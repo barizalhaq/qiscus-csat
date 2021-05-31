@@ -52,6 +52,7 @@ class RatingType(enum.Enum):
     STAR = 1
     NUMBER = 2
     CUSTOM = 3
+    EMOJI = 4
 
 
 class App(BaseModel):
