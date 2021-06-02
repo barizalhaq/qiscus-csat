@@ -17,6 +17,7 @@ class ConfigExtrasSchema(Schema):
     closing_button_text = fields.String()
     disable_rating_instruction = fields.Boolean()
     submit_button_text = fields.String()
+    hide_app_name_title = fields.Boolean()
 
 
 class AppConfigSchema(Schema):

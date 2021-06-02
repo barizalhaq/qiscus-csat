@@ -305,5 +305,6 @@ def _set_default_extras(extras, app):
         extras['submit_button_text'] = ce['submit_button_text']
 
     extras['disable_rating_instruction'] = 'disable_rating_instruction' in ce
+    extras['hide_app_name_title'] = False if 'hide_app_name_title' not in ce else ce['hide_app_name_title']
 
     return extras
