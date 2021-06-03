@@ -242,12 +242,11 @@ def csat_submit():
             flash(error_msg)
             return redirect('/csat/{csat_code}'.format(csat_code=csat_code))
 
-
     # feedback field validation -> rating_min_fb (extras)
     if csat.app.config.extras:
         extras = json.loads(csat.app.config.extras)
 
-        if type(rating) == int and 'rating_min_fb' in extras:
+        if rating.isdigit() and 'rating_min_fb' in extras:
             if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "": # noqa
                 flash(error_msg)
                 return redirect(
