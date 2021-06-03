@@ -62,7 +62,7 @@ def create_app_config():
             rating_total=data['rating_total'],
             extras=extras,
             app_id=app.id,
-            csat_page=data['csat_page'])
+            csat_page=data.get('csat_page'))
 
         db.session.add(config)
         db.session.commit()
