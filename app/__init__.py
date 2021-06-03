@@ -79,10 +79,12 @@ def create_app():
     # index route
     @app.route("/")
     def index():
-        return {
-            "status": HTTPStatus.OK,
-            "message": "qismo csat service up and running!"
-        }
+        # return {
+        #     "status": HTTPStatus.OK,
+        #     "message": "qismo csat service up and running!"
+        # }
+
+        return render_template("index.html")
 
         # return render_template("index.html")
 
