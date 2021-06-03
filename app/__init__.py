@@ -4,7 +4,7 @@ App init module.
 
 import time
 
-from flask import Flask, g, request
+from flask import Flask, g, request, render_template
 from http import HTTPStatus
 from werkzeug.exceptions import HTTPException
 from .extensions import *
@@ -41,10 +41,12 @@ def create_app():
     from .routes import api as api_bp
     from .routes import webhook as webhook_bp
     from .routes import web as web_bp
+    from .v2.routes import v2 as v2_bp
 
     app.register_blueprint(api_bp)
     app.register_blueprint(webhook_bp)
     app.register_blueprint(web_bp)
+    app.register_blueprint(v2_bp)
 
     # before request func
     @app.before_request
@@ -81,5 +83,7 @@ def create_app():
             "status": HTTPStatus.OK,
             "message": "qismo csat service up and running!"
         }
+
+        # return render_template("index.html")
 
     return app

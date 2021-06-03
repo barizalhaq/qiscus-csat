@@ -1,27 +1,36 @@
-{% extends "base.html" %}
-
-{% block main %}
+{% extends "base.html" %} {% block main %}
 <div class="row" style="margin-top: 120px">
-    <div class="col-md-10 m-auto">
-      <div class="text-center mb-4">
-        <img src="{{extras['logo']}}" alt="" width="150px" />
-      </div>
-      <div class="text-center">
-        <h4>
-          Terima kasih atas penilaian dan saran yang telah diberikan. Kami akan terus berusaha meningkatkan kualitas pelayanan {{csat.app.app_name}} kedepannya.
-        </h4>
-      </div>
-      <div class="form-group mt-5" style="display: flex; justify-content: center">
-        <a href="" class="btn btn-primary">Tutup</a>
-      </div>
+  <div class="col-md-10 m-auto">
+    <div class="text-center mb-4">
+      <img src="{{extras['logo']}}" alt="" width="150px" />
     </div>
-  </div>
-{% endblock %}
+    <div class="text-center">
+      {% if 'closing' not in extras %}
+      <h4>
+        Terima kasih atas penilaian dan saran yang telah diberikan. Kami akan
+        terus berusaha meningkatkan kualitas pelayanan {{csat.app.app_name}}
+        kedepannya.
+      </h4>
+      {% endif %} {% if 'closing' in extras %} {{ extras['closing']|safe }} {%
+      endif %}
+    </div>
 
-{% block script %}
+    {% if extras['enable_redirect'] %}
+    <div class="form-group mt-5" style="display: flex; justify-content: center">
+      <a href="" class="btn btn-primary"
+        >{{ extras['closing_button_text'] if 'closing_button_text' in extras
+        else 'Tutup' }}</a
+      >
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block script %}
 <script type="text/javascript">
-  const officialWeb = ('{{csat.app.config.official_web}}' != 'None') ? '{{csat.app.config.official_web}}' : 'https://qiscus.com'
-  
-  $('a').attr('href', officialWeb)
+  {% if extras['enable_redirect'] %}
+    const officialWeb = ('{{csat.app.config.official_web}}' != 'None') ? '{{csat.app.config.official_web}}' : 'https://qiscus.com'
+
+    $('a').attr('href', officialWeb)
+  {% endif %}
 </script>
 {% endblock %}
