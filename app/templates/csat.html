@@ -132,7 +132,7 @@
         </h5>
         {% endif %} {% if 'custom_comment_wording' in extras %} {{
         extras['custom_comment_wording']|safe }} {% endif %} {% if
-        'rating_min_fb' in extras %}
+        'rating_min_fb' in extras and extras['rating_min_fb'] != csat.app.config.rating_total %}
         <label for="feedback"
           ><i
             >Jika mengisi nilai 1 – {{extras['rating_min_fb']}}, maka wajib
