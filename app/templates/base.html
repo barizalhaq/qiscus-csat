@@ -15,10 +15,6 @@
       }
 
       body {
-        -webkit-background-size: cover;
-        -moz-background-size: cover;
-        -o-background-size: cover;
-        background-size: cover;
         color: {{extras['font_color']}}
       }
       .br-theme-fontawesome-stars .br-widget a {
@@ -98,6 +94,10 @@
 
       document.body.style.background = `linear-gradient(rgba(255, 255, 255, {{extras['background_transparancy']}}),
         rgba(255, 255, 255, {{extras['background_transparancy']}})),url("${backgroundUrl.documentElement.textContent}") no-repeat center center fixed`
+      document.body.style.backgroundSize = 'cover'
+      document.body.style.webkitBackgroundSize = 'cover'
+      document.body.style.mozBackgroundSize = 'cover'
+      document.body.style.oBackgroundSize = 'cover'
     </script>
     {% block script %}{% endblock %}
   </body>
