@@ -18,6 +18,7 @@ class ConfigExtrasSchema(Schema):
     disable_rating_instruction = fields.Boolean()
     submit_button_text = fields.String()
     hide_app_name_title = fields.Boolean()
+    ignore_source = fields.String()
 
 
 class AppConfigSchema(Schema):
