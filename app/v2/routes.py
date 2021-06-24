@@ -66,7 +66,7 @@ def get_app(app):
 @authenticated_app
 def create_app_config(app):
     if app.config is not None:
-        return update(app)
+        return update_app_config(app)
 
     json_input = request.get_json(force=True)
     try:
@@ -123,9 +123,7 @@ def create_app_config(app):
     }, HTTPStatus.OK
 
 
-@v2.route('/app/update', methods=["PUT"])
-@authenticated_app
-def update(app):
+def update_app_config(app):
     json_input = request.get_json(force=True)
     try:
         inputs = config_app_schema.load(json_input)
