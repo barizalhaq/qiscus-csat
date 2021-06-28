@@ -146,6 +146,19 @@ def wh_mark_as_resolved(app_code):
         }, 400
 
     config = Config.get_by_app_id(app_id=app.id)
+
+    # check ignore source
+    extras = config.extras
+    extras_dict = json.loads(extras)
+    if extras_dict.get("ignore_source"):
+        ignore_source_dict = json.loads(extras_dict["ignore_source"])
+        source = json_data["service"]["source"]
+        if source in ignore_source_dict:
+            return {
+                'status': HTTPStatus.OK,
+                'message': 'ignore source, csat not sent'
+            }
+
     csat_msg = config.csat_msg
     csat_code = uuid.uuid4().hex
 
