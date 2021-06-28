@@ -13,6 +13,7 @@ from ..extensions import db
 from ..utils.decorator import authenticated_app, marketplace_token
 from botocore.exceptions import ClientError
 from ..extensions import s3_session
+from ..utils.helpers import create_s3_url
 
 v2 = Blueprint('v2', __name__, url_prefix="/api/v2")
 
@@ -189,7 +190,10 @@ def upload_background(app):
         "filename": request_file.filename,
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
-        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
+        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
+        "url": create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extension}"),
+        "extension": extension,
+        "key": f"add_on-csat-{app.app_code}_background.{extension}"
     }
 
     app.config.extras = json.dumps(config_extras)
@@ -226,7 +230,10 @@ def upload_logo(app):
         "filename": request_file.filename,
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
-        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
+        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
+        "url": create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extension}"),
+        "extension": extension,
+        "key": f"add_on-csat-{app.app_code}_logo.{extension}"
     }
 
     app.config.extras = json.dumps(config_extras)

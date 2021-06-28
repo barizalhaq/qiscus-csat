@@ -96,6 +96,7 @@ def create_app_config():
         }
     }
 
+
 @api.route('/csat/<csat_code>/check', methods=['POST'])
 def check(csat_code):
     csat = Csat.get_by_csat_code(csat_code=csat_code)
@@ -106,6 +107,7 @@ def check(csat_code):
         }, HTTPStatus.BAD_REQUEST
 
     return jsonify({ 'data': { 'csat': csat_schema.dump(csat), 'config': config_schema.dump(csat.app.config) } })
+
 
 @api.route('/csat/<csat_code>/create', methods=['POST'])
 def submit_survey(csat_code):
@@ -282,9 +284,9 @@ def _set_default_extras(extras, app):
 
     # csat page media (background n logo)
     if 'media' in ce:
-        extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.jpg")\
+        extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{ce['media']['background']['extension']}")\
             if 'background' in ce['media'] else ce['background'] if 'background' in ce else ''
-        extras['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.jpg")\
+        extras['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{ce['media']['logo']['extension']}")\
             if 'logo' in ce['media'] else ce['logo'] if 'logo' in ce else ''
     elif 'media' not in ce:
         extras['background'] = ce['background'] if 'background' in ce else ''
