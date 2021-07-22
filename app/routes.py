@@ -2,7 +2,7 @@ import json
 import uuid
 import datetime
 
-from flask import Blueprint, request, redirect, render_template, flash, jsonify
+from flask import Blueprint, request, redirect, render_template, flash, jsonify, abort
 from marshmallow import ValidationError
 from http import HTTPStatus
 from .serializers import app_config_schema, csat_schema, config_schema
@@ -13,6 +13,7 @@ from .libs.multichannel import Multichannel
 from .utils.decorator import superadmin_token_required
 from .utils.enums import EmojiRating
 from .utils.helpers import create_s3_url
+import jwt, os
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
 webhook = Blueprint("webhook", __name__, url_prefix="/webhook")
@@ -322,3 +323,39 @@ def _set_default_extras(extras, app):
     extras['hide_app_name_title'] = False if 'hide_app_name_title' not in ce else ce['hide_app_name_title']
 
     return extras
+
+
+@web.route('/<token>/preview')
+def preview_page(token):
+    try:
+        decoded = jwt.decode(token, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
+        app_code = decoded.get('app_code')
+        app = App.get_by_code(app_code)
+
+        if app is None:
+            abort(403, description="Forbidden")
+
+    except:
+        abort(403, description="Forbidden")
+
+    return render_template(
+        'preview.html',
+        app=app, token=token, extras=_set_default_extras(app.config.extras, app), emoji_enums=EmojiRating)
+
+
+@web.route('/<token>/submit_preview', methods=['POST'])
+def submit_preview(token):
+    try:
+        decoded = jwt.decode(token, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
+        app_code = decoded.get('app_code')
+        app = App.get_by_code(app_code)
+
+        if app is None:
+            abort(403, description="Forbidden")
+
+    except:
+        abort(403, description="Forbidden")
+
+    return render_template(
+        'closing.html',
+        app=app, extras=_set_default_extras(app.config.extras, app), emoji_enums=EmojiRating)

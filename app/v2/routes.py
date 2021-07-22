@@ -2,9 +2,10 @@ import datetime
 import json
 import os
 
+import jwt
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
-from ..serializers import app_config_schema, attach_app_schema, config_app_schema, config_schema
+from ..serializers import attach_app_schema, config_app_schema
 from http import HTTPStatus
 from ..libs.multichannel import Multichannel
 from ..models import App, RatingType, Config
@@ -60,7 +61,28 @@ def attach_app():
 @v2.route('/app', methods=["GET"])
 @authenticated_app
 def get_app(app):
-    return jsonify({'data': config_schema.dump(app.config)})
+    protocol = 'https://' if request.is_secure else 'http://'
+    host = request.host.split(':', 1)[0]
+    token = jwt.encode({ 'app_code': app.app_code }, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
+    data = {
+        'official_web': app.config.official_web,
+        'csat_msg': app.config.csat_msg,
+        'rating_total': app.config.rating_total,
+        'extras': app.config.extras,
+        'csat_page': app.config.csat_page,
+        'rating_type': app.config.rating_type.name,
+        'preview_url': '{}{}/{}/preview'.format(protocol, host, token)
+    }
+
+    extras = json.loads(app.config.extras)
+    if 'media' in extras:
+        data['media_url'] = {}
+        if 'logo' in extras['media']:
+            data['media_url']['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
+        if 'background' in extras['media']:
+            data['media_url']['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
+
+    return jsonify({'data': data})
 
 
 @v2.route('/app/create-config', methods=["POST"])
@@ -191,7 +213,6 @@ def upload_background(app):
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
         "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
-        "url": create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extension}"),
         "extension": extension,
         "key": f"add_on-csat-{app.app_code}_background.{extension}"
     }
@@ -231,7 +252,6 @@ def upload_logo(app):
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
         "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
-        "url": create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extension}"),
         "extension": extension,
         "key": f"add_on-csat-{app.app_code}_logo.{extension}"
     }

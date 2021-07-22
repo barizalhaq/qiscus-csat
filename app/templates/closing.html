@@ -8,7 +8,7 @@
       {% if 'closing' not in extras %}
       <h4>
         Terima kasih atas penilaian dan saran yang telah diberikan. Kami akan
-        terus berusaha meningkatkan kualitas pelayanan {{csat.app.app_name}}
+        terus berusaha meningkatkan kualitas pelayanan {{app.app_name}}
         kedepannya.
       </h4>
       {% endif %} {% if 'closing' in extras %} {{ extras['closing']|safe }} {%
@@ -28,7 +28,7 @@
 {% endblock %} {% block script %}
 <script type="text/javascript">
   {% if extras['enable_redirect'] %}
-    const officialWeb = ('{{csat.app.config.official_web}}' != 'None') ? '{{csat.app.config.official_web}}' : 'https://qiscus.com'
+    const officialWeb = ('{{app.config.official_web}}' != 'None') ? '{{app.config.official_web}}' : 'https://qiscus.com'
 
     $('a').attr('href', officialWeb)
   {% endif %}
