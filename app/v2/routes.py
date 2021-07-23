@@ -65,22 +65,23 @@ def get_app(app):
     host = request.host.split(':', 1)[0]
     token = jwt.encode({ 'app_code': app.app_code }, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
     data = {
-        'official_web': app.config.official_web,
-        'csat_msg': app.config.csat_msg,
-        'rating_total': app.config.rating_total,
-        'extras': app.config.extras,
-        'csat_page': app.config.csat_page,
-        'rating_type': app.config.rating_type.name,
-        'preview_url': '{}{}/{}/preview'.format(protocol, host, token)
+        'official_web': app.config.official_web if app.config is not None else '',
+        'csat_msg': app.config.csat_msg if app.config is not None else '',
+        'rating_total': app.config.rating_total if app.config is not None else '',
+        'extras': app.config.extras if app.config is not None else '',
+        'csat_page': app.config.csat_page if app.config is not None else '',
+        'rating_type': app.config.rating_type.name if app.config is not None else '',
+        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config is not None else ''
     }
 
-    extras = json.loads(app.config.extras)
-    if 'media' in extras:
-        data['media_url'] = {}
-        if 'logo' in extras['media']:
-            data['media_url']['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
-        if 'background' in extras['media']:
-            data['media_url']['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
+    if app.config is not None:
+        extras = json.loads(app.config.extras)
+        if 'media' in extras:
+            data['media_url'] = {}
+            if 'logo' in extras['media']:
+                data['media_url']['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
+            if 'background' in extras['media']:
+                data['media_url']['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
 
     return jsonify({'data': data})
 
