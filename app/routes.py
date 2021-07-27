@@ -221,6 +221,14 @@ def csat_form(csat_code):
         return redirect('https://qiscus.com')
 
     if csat.submitted_at is not None:
+        extras = json.loads(csat.app.config.extras)
+        if 'closing_page_after_csat_submitted' in extras and extras['closing_page_after_csat_submitted']:
+            return render_template(
+                'closing.html',
+                csat=csat,
+                app=csat.app,
+                extras=_set_default_extras(csat.app.config.extras, csat.app), emoji_enums=EmojiRating
+            )
         if csat.app.config.official_web:
             return redirect(csat.app.config.official_web)
         else:
@@ -228,7 +236,10 @@ def csat_form(csat_code):
 
     return render_template(
         'csat.html',
-        csat=csat, extras=_set_default_extras(csat.app.config.extras, csat.app), emoji_enums=EmojiRating)
+        csat=csat,
+        app=csat.app,
+        extras=_set_default_extras(csat.app.config.extras, csat.app), emoji_enums=EmojiRating
+    )
 
 
 @web.route('/csat', methods=['POST'])
@@ -276,6 +287,7 @@ def csat_submit():
     return render_template(
         'closing.html',
         csat=csat,
+        app=csat.app,
         extras=_set_default_extras(csat.app.config.extras, csat.app))
 
 

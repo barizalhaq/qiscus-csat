@@ -19,6 +19,7 @@ class ConfigExtrasSchema(Schema):
     submit_button_text = fields.String()
     hide_app_name_title = fields.Boolean()
     ignore_source = fields.String()  # list of number
+    closing_page_after_csat_submitted = fields.Boolean()
 
 
 class AppConfigSchema(Schema):
