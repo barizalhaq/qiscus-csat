@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate, validates_schema, ValidationError
+from marshmallow import Schema, fields, validate, validates_schema, ValidationError, validates
 from .utils.enums import EmojiRatingType
 
 
@@ -37,7 +37,8 @@ class AppConfigSchema(Schema):
     extras = fields.Nested(ConfigExtrasSchema)
     csat_page = fields.String()
     emoji_type = fields.String(
-        validate=validate.OneOf([EmojiRatingType.THUMB.value, EmojiRatingType.FACE.value]),
+        validate=validate.OneOf(
+            [EmojiRatingType.THUMB.value, EmojiRatingType.FACE.value]),
         required=False
     )
 
@@ -45,7 +46,8 @@ class AppConfigSchema(Schema):
     def emoji_type_required_if_rating_is_emoji(self, data, **kwargs):
         if data['rating_type'] == 'emoji':
             if 'emoji_type' not in data:
-                raise ValidationError('Emoji type is required when rating type is emoji')
+                raise ValidationError(
+                    'Emoji type is required when rating type is emoji')
 
 
 class AttachAppSchema(Schema):
@@ -61,20 +63,22 @@ class ConfigSchema(Schema):
     official_web = fields.URL()
     csat_msg = fields.String(required=True)
     rating_type = fields.String(
-        validate=validate.OneOf(['star', 'number', 'custom', 'emoji']), required=True)
-    rating_total = fields.Integer(required=True)
-    extras = fields.Nested(ConfigExtrasSchema)
-    csat_page = fields.String()
+        allow_none=True, validate=validate.OneOf(['star', 'number', 'emoji']))
+    rating_total = fields.Integer(allow_none=True)
+    extras = fields.Nested(ConfigExtrasSchema, allow_none=True)
+    csat_page = fields.String(allow_none=True)
     emoji_type = fields.String(
-        validate=validate.OneOf([EmojiRatingType.THUMB.value, EmojiRatingType.FACE.value]),
-        required=False
+        validate=validate.OneOf(
+            [EmojiRatingType.THUMB.value, EmojiRatingType.FACE.value]),
+        allow_none=True
     )
 
     @validates_schema
     def emoji_type_required_if_rating_is_emoji(self, data, **kwargs):
         if data['rating_type'] == 'emoji':
             if 'emoji_type' not in data:
-                raise ValidationError('Emoji type is required when rating type is emoji')
+                raise ValidationError(
+                    'Emoji type is required when rating type is emoji')
 
 
 app_config_schema = AppConfigSchema()
@@ -85,7 +89,8 @@ config_app_schema = ConfigSchema()
 
 class CsatSchema(Schema):
     class Meta:
-        fields = ('id','csat_code','user_id','rating','feedback','agent_email','source','submitted_at','app_id')
+        fields = ('id', 'csat_code', 'user_id', 'rating', 'feedback',
+                  'agent_email', 'source', 'submitted_at', 'app_id')
 
 
 csat_schema = CsatSchema()
@@ -96,7 +101,8 @@ class Config(Schema):
     rating_type = fields.String()
 
     class Meta:
-        fields = ('official_web','csat_msg','rating_total','extras','csat_page','rating_type')
+        fields = ('official_web', 'csat_msg', 'rating_total',
+                  'extras', 'csat_page', 'rating_type')
 
 
 config_schema = Config()

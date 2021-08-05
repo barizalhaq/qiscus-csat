@@ -77,8 +77,6 @@ def get_app(app):
         'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config.rating_type is not None and app.config.rating_total is not None else None
     }
 
-    print(bool(data['extras']))
-
     data['media_url'] = {}
 
     data['media_url']['logo'] = os.getenv('DEFAULT_LOGO_URL')
@@ -104,69 +102,16 @@ def create_app_config(app):
     if app.config is not None:
         return update_app_config(app)
 
-    json_input = request.get_json(force=True)
-    try:
-        inputs = config_app_schema.load(json_input)
-    except ValidationError as err:
-        return {
-            'status': HTTPStatus.UNPROCESSABLE_ENTITY,
-            'message': 'validation error',
-            'errors': err.messages
-        }, HTTPStatus.UNPROCESSABLE_ENTITY
-
-    protocol = 'https://' if request.is_secure else 'http://'
-    host = request.host.split(':', 1)[0]
-    base = '{}{}'.format(protocol, host)
-    webhook_url = '{base}/webhook/csat/{app_code}'.format(
-        base=base,
-        app_code=app.app_code)
-
-    set_resolve_webhook(app, webhook_url)
-
-    if inputs['rating_type'] == 'emoji' and 'emoji_type' in inputs:
-        inputs['extras']['emoji_type'] = inputs['emoji_type']
-    rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.CUSTOM if inputs['rating_type'] == 'custom' else RatingType.EMOJI  # noqa
-    official_web = inputs['official_web'] if 'official_web' in inputs else None
-    extras = json.dumps(inputs['extras']) if 'extras' in inputs else None
-    rating_total = inputs['rating_total']
-    if rating_type == RatingType.NUMBER and rating_total > 10:
-        rating_total = 10
-    elif rating_type == RatingType.STAR and rating_total > 5:
-        rating_total = 5
-    elif rating_type == RatingType.EMOJI:
-        rating_total = 2
-
-    try:
-        config = Config(
-            official_web=official_web,
-            csat_msg=inputs['csat_msg'],
-            rating_type=rating_type,
-            rating_total=rating_total,
-            extras=extras,
-            app_id=app.id,
-            csat_page=inputs['csat_page'])
-
-        db.session.add(config)
-        db.session.commit()
-
-    except SQLAlchemyError as err:
-        db.session.rollback()
-        raise err
-
-    return {
-        'status': HTTPStatus.OK,
-        'message': 'csat has been configured successfully',
-    }, HTTPStatus.OK
-
 
 def update_app_config(app):
     json_input = request.get_json(force=True)
     try:
         inputs = config_app_schema.load(json_input)
-        existing_extras = json.loads(app.config.extras)
 
-        if 'media' in existing_extras:
-            inputs["extras"]["media"] = existing_extras["media"]
+        if app.config.extras is not None:
+            existing_extras = json.load(app.config.extras)
+            if 'extras' in inputs and 'media' in existing_extras:
+                inputs["extras"]["media"] = existing_extras["media"]
     except ValidationError as err:
         return {
             'status': HTTPStatus.UNPROCESSABLE_ENTITY,
@@ -177,22 +122,26 @@ def update_app_config(app):
     if app.config.rating_type == RatingType.EMOJI and 'emoji_type' in inputs:
         inputs['extras']['emoji_type'] = inputs['emoji_type']
 
-    rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.CUSTOM if inputs['rating_type'] == 'custom' else RatingType.EMOJI  # noqa
-    official_web = inputs['official_web'] if 'official_web' in inputs else None
-    extras = json.dumps(inputs['extras']) if 'extras' in inputs else None
-    rating_total = inputs['rating_total']
-    if rating_type == RatingType.NUMBER and rating_total > 10:
-        rating_total = 10
-    elif rating_type == RatingType.STAR and rating_total > 5:
-        rating_total = 5
-    elif rating_type == RatingType.EMOJI:
-        rating_total = 2
-
-    app.config.rating_total = rating_total
-    app.config.extras = extras
-    app.config.official_web = official_web
+    if 'extras' in inputs and inputs['extras'] is not None:
+        app.config.extras = json.dumps(inputs['extras'])
+    app.config.csat_msg = inputs['csat_msg']
+    app.config.rating_total = inputs['rating_total']
+    app.config.official_web = inputs['official_web']
+    if app.config.rating_type is None:
+        app.config.rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.EMOJI if inputs['rating_type'] == 'emoji' else None  # noqa
 
     app.update()
+
+    if app.config.rating_type is not None and app.config.rating_total is not None:
+        protocol = 'https://' if request.is_secure or os.getenv(
+            'FORCE_HTTPS') else 'http://'
+        host = request.host.split(':', 1)[0]
+        base = '{}{}'.format(protocol, host)
+        webhook_url = '{base}/webhook/csat/{app_code}'.format(
+            base=base,
+            app_code=app.app_code)
+
+        set_resolve_webhook(app, webhook_url)
 
     return {
         'status': HTTPStatus.OK,
