@@ -48,6 +48,8 @@ def attach_app():
 
         db.session.add(app)
         db.session.commit()
+
+        app.create_default_config()
     except SQLAlchemyError as err:
         db.session.rollback()
         raise err
@@ -63,25 +65,35 @@ def attach_app():
 def get_app(app):
     protocol = 'https://' if request.is_secure else 'http://'
     host = request.host.split(':', 1)[0]
-    token = jwt.encode({ 'app_code': app.app_code }, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
+    token = jwt.encode({'app_code': app.app_code}, key=os.getenv(
+        'CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
     data = {
-        'official_web': app.config.official_web if app.config is not None else '',
-        'csat_msg': app.config.csat_msg if app.config is not None else '',
-        'rating_total': app.config.rating_total if app.config is not None else '',
-        'extras': app.config.extras if app.config is not None else '',
-        'csat_page': app.config.csat_page if app.config is not None else '',
-        'rating_type': app.config.rating_type.name if app.config is not None else '',
-        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config is not None else ''
+        'official_web': app.config.official_web if app.config.official_web is not None else None,
+        'csat_msg': app.config.csat_msg if app.config.csat_msg is not None else None,
+        'rating_total': app.config.rating_total if app.config.rating_total is not None else None,
+        'extras': app.config.extras if app.config.extras is not None else {},
+        'csat_page': app.config.csat_page if app.config.csat_page is not None else None,
+        'rating_type': app.config.rating_type.name if app.config.rating_type is not None else None,
+        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config.rating_type is not None and app.config.rating_total is not None else None
     }
 
-    if app.config is not None:
+    print(bool(data['extras']))
+
+    data['media_url'] = {}
+
+    data['media_url']['logo'] = os.getenv('DEFAULT_LOGO_URL')
+    data['media_url']['background'] = os.getenv(
+        'DEFAULT_BACKGROUND_URL')
+
+    if app.config.extras is not None:
         extras = json.loads(app.config.extras)
         if 'media' in extras:
-            data['media_url'] = {}
             if 'logo' in extras['media']:
-                data['media_url']['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
+                data['media_url']['logo'] = create_s3_url(
+                    s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
             if 'background' in extras['media']:
-                data['media_url']['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
+                data['media_url']['background'] = create_s3_url(
+                    s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
 
     return jsonify({'data': data})
 
@@ -157,10 +169,10 @@ def update_app_config(app):
             inputs["extras"]["media"] = existing_extras["media"]
     except ValidationError as err:
         return {
-           'status': HTTPStatus.UNPROCESSABLE_ENTITY,
-           'message': 'validation error',
-           'errors': err.messages
-       }, HTTPStatus.UNPROCESSABLE_ENTITY
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY,
+            'message': 'validation error',
+            'errors': err.messages
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
 
     if app.config.rating_type == RatingType.EMOJI and 'emoji_type' in inputs:
         inputs['extras']['emoji_type'] = inputs['emoji_type']
@@ -183,8 +195,8 @@ def update_app_config(app):
     app.update()
 
     return {
-       'status': HTTPStatus.OK,
-       'message': 'csat has been updated successfully',
+        'status': HTTPStatus.OK,
+        'message': 'csat has been updated successfully',
     }, HTTPStatus.OK
 
 
@@ -199,7 +211,8 @@ def upload_background(app):
     try:
         splitted = request_file.filename.split(".")
         extension = request_file.filename.split(".")[len(splitted) - 1]
-        bucket.Object(f"add_on-csat-{app.app_code}_background.{extension}").put(Body=request_file)
+        bucket.Object(
+            f"add_on-csat-{app.app_code}_background.{extension}").put(Body=request_file)
     except ClientError:
         return {
             'message': 'upload error',
@@ -238,12 +251,13 @@ def upload_logo(app):
     try:
         splitted = request_file.filename.split(".")
         extension = request_file.filename.split(".")[len(splitted) - 1]
-        bucket.Object(f"add_on-csat-{app.app_code}_logo.{extension}").put(Body=request_file)
+        bucket.Object(
+            f"add_on-csat-{app.app_code}_logo.{extension}").put(Body=request_file)
     except ClientError:
         return {
-           'message': 'upload error',
-           'status': HTTPStatus.UNPROCESSABLE_ENTITY
-       }, HTTPStatus.UNPROCESSABLE_ENTITY
+            'message': 'upload error',
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
 
     config_extras = json.loads(app.config.extras)
     if 'media' not in config_extras:
@@ -261,9 +275,9 @@ def upload_logo(app):
     app.update()
 
     return {
-       'message': 'logo image has been uploaded successfully',
-       'status': HTTPStatus.OK
-   }, HTTPStatus.OK
+        'message': 'logo image has been uploaded successfully',
+        'status': HTTPStatus.OK
+    }, HTTPStatus.OK
 
 
 @v2.route('/app/media/delete', methods=['DELETE'])

@@ -13,7 +13,8 @@ from .libs.multichannel import Multichannel
 from .utils.decorator import superadmin_token_required
 from .utils.enums import EmojiRating
 from .utils.helpers import create_s3_url
-import jwt, os
+import jwt
+import os
 
 api = Blueprint("api", __name__, url_prefix="/api/v1")
 webhook = Blueprint("webhook", __name__, url_prefix="/webhook")
@@ -41,7 +42,7 @@ def create_app_config():
             'message': 'appid already registered'
         }, HTTPStatus.BAD_REQUEST
 
-    rating_type = RatingType.STAR if data['rating_type'] == 'star' else RatingType.NUMBER if data['rating_type'] == 'number' else RatingType.CUSTOM # noqa
+    rating_type = RatingType.STAR if data['rating_type'] == 'star' else RatingType.NUMBER if data['rating_type'] == 'number' else RatingType.CUSTOM  # noqa
     official_web = data['official_web'] if 'official_web' in data else None
     extras = json.dumps(data['extras']) if 'extras' in data else None
 
@@ -107,7 +108,7 @@ def check(csat_code):
             'message': 'csat code is invalid'
         }, HTTPStatus.BAD_REQUEST
 
-    return jsonify({ 'data': { 'csat': csat_schema.dump(csat), 'config': config_schema.dump(csat.app.config) } })
+    return jsonify({'data': {'csat': csat_schema.dump(csat), 'config': config_schema.dump(csat.app.config)}})
 
 
 @api.route('/csat/<csat_code>/create', methods=['POST'])
@@ -192,7 +193,8 @@ def wh_mark_as_resolved(app_code):
         r = multichannel.get_all_channel()
         channels = r.json()["data"]
         if channels.get("custom_channels"):
-            custom_channel = next((item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
+            custom_channel = next(
+                (item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
             if custom_channel:
                 qismo_source = custom_channel["name"]
 
@@ -249,7 +251,7 @@ def csat_submit():
     csat_code = request.form.get("csat_code")
     rating = request.form.get("rating")
     feedback = request.form.get("feedback")
-    error_msg = "Harap berikan penilaian dan ulasan Anda untuk membantu kami memberikan pelayanan yang terbaik" # noqa
+    error_msg = "Harap berikan penilaian dan ulasan Anda untuk membantu kami memberikan pelayanan yang terbaik"  # noqa
 
     csat = Csat.get_by_csat_code(csat_code=csat_code)
 
@@ -274,7 +276,7 @@ def csat_submit():
         extras = json.loads(csat.app.config.extras)
 
         if rating.isdigit() and 'rating_min_fb' in extras:
-            if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "": # noqa
+            if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "":  # noqa
                 flash(error_msg)
                 return redirect(
                     '/csat/{csat_code}'.format(csat_code=csat_code))
@@ -296,17 +298,18 @@ def _set_default_extras(extras, app):
     extras = {}
 
     # csat page media (background n logo)
+    extras['logo'] = os.getenv('DEFAULT_LOGO_URL')
+    extras['background'] = os.getenv(
+        'DEFAULT_BACKGROUND_URL')
     if 'media' in ce:
         extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{ce['media']['background']['extension']}")\
             if 'background' in ce['media'] else ce['background'] if 'background' in ce else ''
         extras['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{ce['media']['logo']['extension']}")\
             if 'logo' in ce['media'] else ce['logo'] if 'logo' in ce else ''
-    elif 'media' not in ce:
-        extras['background'] = ce['background'] if 'background' in ce else ''
-        extras['logo'] = ce['logo'] if 'logo' in ce else ''
 
-    extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0 # noqa
-    extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000' # noqa
+    extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0.3 if extras['background'] == os.getenv(
+        'DEFAULT_BACKGROUND_URL') else 0  # noqa
+    extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000'  # noqa
     extras['color'] = ce['color'] if 'color' in ce else '#005791'
     extras['enable_redirect'] = True if 'enable_redirect' not in ce else ce['enable_redirect']
     extras['emoji_type'] = ce['emoji_type'] if app.config.rating_type == RatingType.EMOJI else ''
@@ -340,7 +343,8 @@ def _set_default_extras(extras, app):
 @web.route('/<token>/preview')
 def preview_page(token):
     try:
-        decoded = jwt.decode(token, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
+        decoded = jwt.decode(token, key=os.getenv(
+            'CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
         app_code = decoded.get('app_code')
         app = App.get_by_code(app_code)
 
@@ -358,7 +362,8 @@ def preview_page(token):
 @web.route('/<token>/submit_preview', methods=['POST'])
 def submit_preview(token):
     try:
-        decoded = jwt.decode(token, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
+        decoded = jwt.decode(token, key=os.getenv(
+            'CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
         app_code = decoded.get('app_code')
         app = App.get_by_code(app_code)
 

@@ -70,14 +70,17 @@ class App(BaseModel):
     def get_by_code(cls, app_code):
         return cls.query.filter_by(app_code=app_code).first()
 
+    def create_default_config(self):
+        Config.default(self.id)
+
 
 class Config(BaseModel):
     __tablename__ = "configs"
 
     official_web = db.Column(db.String, nullable=True)
     csat_msg = db.Column(db.String, nullable=False)
-    rating_type = db.Column(db.Enum(RatingType), nullable=False)
-    rating_total = db.Column(db.Integer, nullable=False)
+    rating_type = db.Column(db.Enum(RatingType), nullable=True)
+    rating_total = db.Column(db.Integer, nullable=True)
     extras = db.Column(db.String, nullable=True)
     csat_page = db.Column(db.String, nullable=True)
 
@@ -90,6 +93,24 @@ class Config(BaseModel):
     @classmethod
     def get_by_app_id(cls, app_id):
         return cls.query.filter_by(app_id=app_id).first()
+
+    @classmethod
+    def default(cls, app_id):
+        default_config = cls(
+            csat_msg="Agar kami dapat terus meningkatkan pelayanan kepada pelanggan, mohon kesediaannya meluangkan waktu untuk mengisi survey dengan klik link berikut *{link}*. Terima kasih",
+            official_web="https://qiscus.com",
+            rating_type=None,
+            rating_total=None,
+            extras=None,
+            app_id=app_id,
+            csat_page=None
+        )
+        try:
+            db.session.add(default_config)
+            db.session.commit()
+        except SQLAlchemyError as err:
+            db.session.rollback()
+            raise err
 
 
 class Csat(BaseModel):
