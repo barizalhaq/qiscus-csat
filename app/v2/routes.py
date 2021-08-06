@@ -109,7 +109,7 @@ def update_app_config(app):
         inputs = config_app_schema.load(json_input)
 
         if app.config.extras is not None:
-            existing_extras = json.load(app.config.extras)
+            existing_extras = json.loads(app.config.extras)
             if 'extras' in inputs and 'media' in existing_extras:
                 inputs["extras"]["media"] = existing_extras["media"]
     except ValidationError as err:
