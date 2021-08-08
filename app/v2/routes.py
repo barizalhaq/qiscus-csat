@@ -110,7 +110,7 @@ def update_app_config(app):
 
         if app.config.extras is not None:
             existing_extras = json.loads(app.config.extras)
-            if 'extras' in inputs and 'media' in existing_extras:
+            if 'extras' in inputs and inputs['extras'] is not None and 'media' in existing_extras:
                 inputs["extras"]["media"] = existing_extras["media"]
     except ValidationError as err:
         return {
@@ -124,9 +124,9 @@ def update_app_config(app):
 
     if 'extras' in inputs and inputs['extras'] is not None:
         app.config.extras = json.dumps(inputs['extras'])
-    app.config.csat_msg = inputs['csat_msg']
-    app.config.rating_total = inputs['rating_total']
-    app.config.official_web = inputs['official_web']
+    # app.config.csat_msg = inputs['csat_msg']
+    # app.config.rating_total = inputs['rating_total']
+    # app.config.official_web = inputs['official_web']
     if app.config.rating_type is None:
         app.config.rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.EMOJI if inputs['rating_type'] == 'emoji' else None  # noqa
 
