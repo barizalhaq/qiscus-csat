@@ -84,6 +84,4 @@ def create_app():
             "message": "qismo csat service up and running!"
         }
 
-        # return render_template("index.html")
-
     return app
