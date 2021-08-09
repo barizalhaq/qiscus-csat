@@ -303,9 +303,10 @@ def _set_default_extras(extras, app):
         'DEFAULT_BACKGROUND_URL')
     if 'media' in ce:
         extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{ce['media']['background']['extension']}")\
-            if 'background' in ce['media'] else ce['background'] if 'background' in ce else ''
+            if 'background' in ce['media'] else ce['background'] if 'background' in ce else os.getenv(
+            'DEFAULT_BACKGROUND_URL')
         extras['logo'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_logo.{ce['media']['logo']['extension']}")\
-            if 'logo' in ce['media'] else ce['logo'] if 'logo' in ce else ''
+            if 'logo' in ce['media'] else ce['logo'] if 'logo' in ce else os.getenv('DEFAULT_LOGO_URL')
 
     extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0.3 if extras['background'] == os.getenv(
         'DEFAULT_BACKGROUND_URL') else 0  # noqa
@@ -336,6 +337,8 @@ def _set_default_extras(extras, app):
 
     extras['disable_rating_instruction'] = 'disable_rating_instruction' in ce
     extras['hide_app_name_title'] = False if 'hide_app_name_title' not in ce else ce['hide_app_name_title']
+
+    print(extras['background'])
 
     return extras
 
