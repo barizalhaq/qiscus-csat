@@ -29,6 +29,11 @@ def authenticated_app(f):
             decoded = jwt.decode(token, key=os.getenv('CSAT_ADD_ON_SIGNATURE_KEY'), algorithms='HS256')
             app_code = decoded.get('app_code')
             app = App.get_by_code(app_code)
+
+            if app is None:
+                return {
+                    'message': 'Unauthorized'
+                }, HTTPStatus.UNAUTHORIZED
         except:
             return {
                 'message': 'Invalid token!'

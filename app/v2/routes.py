@@ -2,9 +2,10 @@ import datetime
 import json
 import os
 
+import jwt
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
-from ..serializers import app_config_schema, attach_app_schema, config_app_schema, config_schema
+from ..serializers import attach_app_schema, config_app_schema
 from http import HTTPStatus
 from ..libs.multichannel import Multichannel
 from ..models import App, RatingType, Config
@@ -13,6 +14,7 @@ from ..extensions import db
 from ..utils.decorator import authenticated_app, marketplace_token
 from botocore.exceptions import ClientError
 from ..extensions import s3_session
+from ..utils.helpers import create_s3_url
 
 v2 = Blueprint('v2', __name__, url_prefix="/api/v2")
 
@@ -46,6 +48,8 @@ def attach_app():
 
         db.session.add(app)
         db.session.commit()
+
+        app.create_default_config()
     except SQLAlchemyError as err:
         db.session.rollback()
         raise err
@@ -59,18 +63,55 @@ def attach_app():
 @v2.route('/app', methods=["GET"])
 @authenticated_app
 def get_app(app):
-    return jsonify({'data': config_schema.dump(app.config)})
+    protocol = 'https://' if request.is_secure else 'http://'
+    host = request.host.split(':', 1)[0]
+    token = jwt.encode({'app_code': app.app_code}, key=os.getenv(
+        'CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
+    data = {
+        'official_web': app.config.official_web if app.config.official_web is not None else None,
+        'csat_msg': app.config.csat_msg if app.config.csat_msg is not None else None,
+        'rating_total': app.config.rating_total if app.config.rating_total is not None else None,
+        'extras': app.config.extras if app.config.extras is not None else {},
+        'csat_page': app.config.csat_page if app.config.csat_page is not None else None,
+        'rating_type': app.config.rating_type.name if app.config.rating_type is not None else None,
+        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config.rating_type is not None and app.config.rating_total is not None else None
+    }
+
+    data['media_url'] = {}
+
+    data['media_url']['logo'] = os.getenv('DEFAULT_LOGO_URL')
+    data['media_url']['background'] = os.getenv(
+        'DEFAULT_BACKGROUND_URL')
+
+    if app.config.extras is not None:
+        extras = json.loads(app.config.extras)
+        if 'media' in extras:
+            if 'logo' in extras['media']:
+                data['media_url']['logo'] = create_s3_url(
+                    s3_session, f"add_on-csat-{app.app_code}_logo.{extras['media']['logo']['extension']}")
+            if 'background' in extras['media']:
+                data['media_url']['background'] = create_s3_url(
+                    s3_session, f"add_on-csat-{app.app_code}_background.{extras['media']['background']['extension']}")
+
+    return jsonify({'data': data})
 
 
 @v2.route('/app/create-config', methods=["POST"])
 @authenticated_app
 def create_app_config(app):
     if app.config is not None:
-        return update(app)
+        return update_app_config(app)
 
+
+def update_app_config(app):
     json_input = request.get_json(force=True)
     try:
         inputs = config_app_schema.load(json_input)
+
+        if app.config.extras is not None:
+            existing_extras = json.loads(app.config.extras)
+            if 'extras' in inputs and inputs['extras'] is not None and 'media' in existing_extras:
+                inputs["extras"]["media"] = existing_extras["media"]
     except ValidationError as err:
         return {
             'status': HTTPStatus.UNPROCESSABLE_ENTITY,
@@ -78,91 +119,33 @@ def create_app_config(app):
             'errors': err.messages
         }, HTTPStatus.UNPROCESSABLE_ENTITY
 
-    protocol = 'https://' if request.is_secure else 'http://'
-    host = request.host.split(':', 1)[0]
-    base = '{}{}'.format(protocol, host)
-    webhook_url = '{base}/webhook/csat/{app_code}'.format(
-        base=base,
-        app_code=app.app_code)
-
-    set_resolve_webhook(app, webhook_url)
-
-    if inputs['rating_type'] == 'emoji' and 'emoji_type' in inputs:
-        inputs['extras']['emoji_type'] = inputs['emoji_type']
-    rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.CUSTOM if inputs['rating_type'] == 'custom' else RatingType.EMOJI  # noqa
-    official_web = inputs['official_web'] if 'official_web' in inputs else None
-    extras = json.dumps(inputs['extras']) if 'extras' in inputs else None
-    rating_total = inputs['rating_total']
-    if rating_type == RatingType.NUMBER and rating_total > 10:
-        rating_total = 10
-    elif rating_type == RatingType.STAR and rating_total > 5:
-        rating_total = 5
-    elif rating_type == RatingType.EMOJI:
-        rating_total = 2
-
-    try:
-        config = Config(
-            official_web=official_web,
-            csat_msg=inputs['csat_msg'],
-            rating_type=rating_type,
-            rating_total=rating_total,
-            extras=extras,
-            app_id=app.id,
-            csat_page=inputs['csat_page'])
-
-        db.session.add(config)
-        db.session.commit()
-
-    except SQLAlchemyError as err:
-        db.session.rollback()
-        raise err
-
-    return {
-        'status': HTTPStatus.OK,
-        'message': 'csat has been configured successfully',
-    }, HTTPStatus.OK
-
-
-@v2.route('/app/update', methods=["PUT"])
-@authenticated_app
-def update(app):
-    json_input = request.get_json(force=True)
-    try:
-        inputs = config_app_schema.load(json_input)
-        existing_extras = json.loads(app.config.extras)
-
-        if 'media' in existing_extras:
-            inputs["extras"]["media"] = existing_extras["media"]
-    except ValidationError as err:
-        return {
-           'status': HTTPStatus.UNPROCESSABLE_ENTITY,
-           'message': 'validation error',
-           'errors': err.messages
-       }, HTTPStatus.UNPROCESSABLE_ENTITY
-
     if app.config.rating_type == RatingType.EMOJI and 'emoji_type' in inputs:
         inputs['extras']['emoji_type'] = inputs['emoji_type']
 
-    rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.CUSTOM if inputs['rating_type'] == 'custom' else RatingType.EMOJI  # noqa
-    official_web = inputs['official_web'] if 'official_web' in inputs else None
-    extras = json.dumps(inputs['extras']) if 'extras' in inputs else None
-    rating_total = inputs['rating_total']
-    if rating_type == RatingType.NUMBER and rating_total > 10:
-        rating_total = 10
-    elif rating_type == RatingType.STAR and rating_total > 5:
-        rating_total = 5
-    elif rating_type == RatingType.EMOJI:
-        rating_total = 2
-
-    app.config.rating_total = rating_total
-    app.config.extras = extras
-    app.config.official_web = official_web
+    if 'extras' in inputs and inputs['extras'] is not None:
+        app.config.extras = json.dumps(inputs['extras'])
+    app.config.csat_msg = inputs['csat_msg']
+    app.config.rating_total = inputs['rating_total']
+    app.config.official_web = inputs['official_web']
+    if app.config.rating_type is None:
+        app.config.rating_type = RatingType.STAR if inputs['rating_type'] == 'star' else RatingType.NUMBER if inputs['rating_type'] == 'number' else RatingType.EMOJI if inputs['rating_type'] == 'emoji' else None  # noqa
 
     app.update()
 
+    if app.config.rating_type is not None and app.config.rating_total is not None:
+        protocol = 'https://' if request.is_secure or os.getenv(
+            'FORCE_HTTPS') else 'http://'
+        host = request.host.split(':', 1)[0]
+        base = '{}{}'.format(protocol, host)
+        webhook_url = '{base}/webhook/csat/{app_code}'.format(
+            base=base,
+            app_code=app.app_code)
+
+        set_resolve_webhook(app, webhook_url)
+
     return {
-       'status': HTTPStatus.OK,
-       'message': 'csat has been updated successfully',
+        'status': HTTPStatus.OK,
+        'message': 'csat has been updated successfully',
     }, HTTPStatus.OK
 
 
@@ -177,7 +160,8 @@ def upload_background(app):
     try:
         splitted = request_file.filename.split(".")
         extension = request_file.filename.split(".")[len(splitted) - 1]
-        bucket.Object(f"add_on-csat-{app.app_code}_background.{extension}").put(Body=request_file)
+        bucket.Object(
+            f"add_on-csat-{app.app_code}_background.{extension}").put(Body=request_file)
     except ClientError:
         return {
             'message': 'upload error',
@@ -191,7 +175,9 @@ def upload_background(app):
         "filename": request_file.filename,
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
-        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
+        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
+        "extension": extension,
+        "key": f"add_on-csat-{app.app_code}_background.{extension}"
     }
 
     app.config.extras = json.dumps(config_extras)
@@ -214,12 +200,13 @@ def upload_logo(app):
     try:
         splitted = request_file.filename.split(".")
         extension = request_file.filename.split(".")[len(splitted) - 1]
-        bucket.Object(f"add_on-csat-{app.app_code}_logo.{extension}").put(Body=request_file)
+        bucket.Object(
+            f"add_on-csat-{app.app_code}_logo.{extension}").put(Body=request_file)
     except ClientError:
         return {
-           'message': 'upload error',
-           'status': HTTPStatus.UNPROCESSABLE_ENTITY
-       }, HTTPStatus.UNPROCESSABLE_ENTITY
+            'message': 'upload error',
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
 
     config_extras = json.loads(app.config.extras)
     if 'media' not in config_extras:
@@ -228,16 +215,18 @@ def upload_logo(app):
         "filename": request_file.filename,
         "mimetype": request_file.content_type,
         "size": len(request_file.read()),
-        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S")
+        "uploaded_at": (datetime.datetime.now()).strftime("%d-%m-%Y %H:%M:%S"),
+        "extension": extension,
+        "key": f"add_on-csat-{app.app_code}_logo.{extension}"
     }
 
     app.config.extras = json.dumps(config_extras)
     app.update()
 
     return {
-       'message': 'logo image has been uploaded successfully',
-       'status': HTTPStatus.OK
-   }, HTTPStatus.OK
+        'message': 'logo image has been uploaded successfully',
+        'status': HTTPStatus.OK
+    }, HTTPStatus.OK
 
 
 @v2.route('/app/media/delete', methods=['DELETE'])
