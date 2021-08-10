@@ -159,11 +159,11 @@ def wh_mark_as_resolved(app_code):
     extras = config.extras
     extras_dict = json.loads(extras)
 
-    room_mulchan = MultichannelRoom(
-        app_code=app_code, app_secret=extras_dict['app_secret'], room_id=room_id)
     send_csat = True
 
     if 'resolved_by_agent_only' in extras_dict and extras_dict['resolved_by_agent_only'] is not False:
+        room_mulchan = MultichannelRoom(
+            app_code=app_code, app_secret=extras_dict['app_secret'], room_id=room_id)
         send_csat = room_mulchan.send_csat_enabled()
 
     if send_csat:
