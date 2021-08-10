@@ -1,3 +1,4 @@
+from .libs.multichannel_room import MultichannelRoom
 import json
 import uuid
 import datetime
@@ -140,6 +141,9 @@ def submit_survey(csat_code):
 
 @webhook.route('/csat/<app_code>', methods=['POST'])
 def wh_mark_as_resolved(app_code):
+    resolved_payload = request.get_json(force=True)
+    room_id = resolved_payload['service']['room_id']
+
     """Handle request comming from multichannel mark as resolved webhook."""
     json_data = request.get_json(force=True)
     app = App.get_by_code(app_code=app_code)
@@ -154,64 +158,75 @@ def wh_mark_as_resolved(app_code):
     # check ignore source
     extras = config.extras
     extras_dict = json.loads(extras)
-    if extras_dict.get("ignore_source"):
-        ignore_source_dict = json.loads(extras_dict["ignore_source"])
-        source = json_data["service"]["source"]
-        if source in ignore_source_dict:
-            return {
-                'status': HTTPStatus.OK,
-                'message': 'ignore source, csat not sent'
-            }
 
-    csat_msg = config.csat_msg
-    csat_code = uuid.uuid4().hex
+    room_mulchan = MultichannelRoom(
+        app_code=app_code, app_secret=extras_dict['app_secret'], room_id=room_id)
+    send_csat = True
 
-    if config.rating_type == RatingType.CUSTOM and len(config.csat_page) > 0:
-        csat_url = config.csat_page.format(csat_code=csat_code)
-    else:
-        csat_url = '{base}csat/{csat_code}'.format(
-            base=request.url_root,
-            csat_code=csat_code)
+    if 'resolved_by_agent_only' in extras_dict and extras_dict['resolved_by_agent_only'] is not False:
+        send_csat = room_mulchan.send_csat_enabled()
 
-    # inject {link} variable in csat msg
-    msg = csat_msg.replace('{link}', csat_url)
+    if send_csat:
+        if extras_dict.get("ignore_source"):
+            ignore_source_dict = json.loads(extras_dict["ignore_source"])
+            source = json_data["service"]["source"]
+            if source in ignore_source_dict:
+                return {
+                    'status': HTTPStatus.OK,
+                    'message': 'ignore source, csat not sent'
+                }
 
-    # sent customer satisfaction message to the customer
-    room_id = json_data["service"]["room_id"]
-    multichannel = Multichannel(
-        app_code=app.app_code,
-        admin_email=app.admin_email,
-        admin_token=app.admin_token)
+        csat_msg = config.csat_msg
+        csat_code = uuid.uuid4().hex
 
-    multichannel.send_bot_message(room_id=room_id, message=msg)
+        if config.rating_type == RatingType.CUSTOM and len(config.csat_page) > 0:
+            csat_url = config.csat_page.format(csat_code=csat_code)
+        else:
+            csat_url = '{base}csat/{csat_code}'.format(
+                base=request.url_root,
+                csat_code=csat_code)
 
-    # filter source
-    common_ch = {"wa", "qiscus", "telegram", "line", "fb"}
-    qismo_source = json_data["service"]["source"]
-    if qismo_source not in common_ch:
-        qismo_source = "custom_channel"
-        r = multichannel.get_all_channel()
-        channels = r.json()["data"]
-        if channels.get("custom_channels"):
-            custom_channel = next(
-                (item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
-            if custom_channel:
-                qismo_source = custom_channel["name"]
+        # inject {link} variable in csat msg
+        msg = csat_msg.replace('{link}', csat_url)
 
-    # store satisfaction data to the database
-    csat = Csat(
-        csat_code=csat_code,
-        user_id=json_data["customer"]["user_id"],
-        agent_email=json_data["resolved_by"]["email"],
-        source=qismo_source,
-        app_id=app.id)
+        # sent customer satisfaction message to the customer
+        room_id = json_data["service"]["room_id"]
+        multichannel = Multichannel(
+            app_code=app.app_code,
+            admin_email=app.admin_email,
+            admin_token=app.admin_token)
 
-    csat.save()
+        multichannel.send_bot_message(room_id=room_id, message=msg)
 
-    return {
-        'status': HTTPStatus.OK,
-        'message': 'csat was successfully sent to customer'
-    }
+        # filter source
+        common_ch = {"wa", "qiscus", "telegram", "line", "fb"}
+        qismo_source = json_data["service"]["source"]
+        if qismo_source not in common_ch:
+            qismo_source = "custom_channel"
+            r = multichannel.get_all_channel()
+            channels = r.json()["data"]
+            if channels.get("custom_channels"):
+                custom_channel = next(
+                    (item for item in channels["custom_channels"] if item["identifier_key"] == json_data["service"]["source"]), None)
+                if custom_channel:
+                    qismo_source = custom_channel["name"]
+
+        # store satisfaction data to the database
+        csat = Csat(
+            csat_code=csat_code,
+            user_id=json_data["customer"]["user_id"],
+            agent_email=json_data["resolved_by"]["email"],
+            source=qismo_source,
+            app_id=app.id)
+
+        csat.save()
+
+        return {
+            'status': HTTPStatus.OK,
+            'message': 'csat was successfully sent to customer'
+        }
+
+    return {}, HTTPStatus.NO_CONTENT
 
 
 @web.route('/csat/<csat_code>')
