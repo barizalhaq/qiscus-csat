@@ -316,6 +316,11 @@ def _set_default_extras(extras, app):
     extras['logo'] = os.getenv('DEFAULT_LOGO_URL')
     extras['background'] = os.getenv(
         'DEFAULT_BACKGROUND_URL')
+    if 'media' not in ce and 'background' in ce and ce['background'] is not None:
+        extras['background'] = ce['background']
+
+    if 'media' not in ce and 'logo' in ce and ce['logo'] is not None:
+        extras['logo'] = ce['logo']
     if 'media' in ce:
         extras['background'] = create_s3_url(s3_session, f"add_on-csat-{app.app_code}_background.{ce['media']['background']['extension']}")\
             if 'background' in ce['media'] else ce['background'] if 'background' in ce else os.getenv(
