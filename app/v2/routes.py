@@ -120,7 +120,7 @@ def update_app_config(app):
             'errors': err.messages
         }, HTTPStatus.UNPROCESSABLE_ENTITY
 
-    if app.config.rating_type == RatingType.EMOJI and 'emoji_type' in inputs:
+    if inputs['rating_type'] == 'emoji':
         inputs['extras']['emoji_type'] = inputs['emoji_type']
 
     if 'extras' in inputs and inputs['extras'] is not None:
