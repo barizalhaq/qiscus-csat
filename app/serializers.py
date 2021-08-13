@@ -45,7 +45,7 @@ class AppConfigSchema(Schema):
     @validates_schema
     def emoji_type_required_if_rating_is_emoji(self, data, **kwargs):
         if data['rating_type'] == 'emoji':
-            if 'emoji_type' not in data:
+            if 'emoji_type' not in data or data['emoji_type'] is None:
                 raise ValidationError(
                     'Emoji type is required when rating type is emoji')
 

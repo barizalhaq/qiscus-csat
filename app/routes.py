@@ -74,7 +74,8 @@ def create_app_config():
         raise err
 
     # set url mark as resolved webhook url
-    protocol = 'https://' if request.is_secure else 'http://'
+    protocol = 'https://' if request.is_secure or os.getenv(
+        'FORCE_HTTPS') else 'http://'
     host = request.host.split(':', 1)[0]
     base = '{}{}'.format(protocol, host)
     webhook_url = '{base}/webhook/csat/{app_code}'.format(
@@ -330,8 +331,9 @@ def _set_default_extras(extras, app):
 
     extras['background_transparancy'] = ce['background_transparancy'] if 'background_transparancy' in ce else 0.3 if extras['background'] == os.getenv(
         'DEFAULT_BACKGROUND_URL') else 0  # noqa
-    extras['font_color'] = ce['font_color'] if 'font_color' in ce else '#000000'  # noqa
-    extras['color'] = ce['color'] if 'color' in ce else '#005791'
+    extras['font_color'] = ce['font_color'] if 'font_color' in ce and ce['font_color'] is not None else '#000000'  # noqa
+    extras['color'] = ce['color'] if 'color' in ce and ce['color'] is not None else '#005791'
+    extras['button_text_color'] = ce['font_color'] if 'font_color' in ce and ce['font_color'] is not None else '#fff'
     extras['enable_redirect'] = True if 'enable_redirect' not in ce else ce['enable_redirect']
     extras['emoji_type'] = ce['emoji_type'] if app.config.rating_type == RatingType.EMOJI else ''
     if 'rating_min_fb' in ce:
