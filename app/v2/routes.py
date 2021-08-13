@@ -106,6 +106,10 @@ def create_app_config(app):
 
 def update_app_config(app):
     json_input = request.get_json(force=True)
+    if app.config.rating_type == RatingType.EMOJI:
+        existing_extras = json.loads(app.config.extras)
+        json_input['emoji_type'] = existing_extras['emoji_type']
+
     try:
         inputs = config_app_schema.load(json_input)
 
