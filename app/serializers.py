@@ -20,6 +20,7 @@ class ConfigExtrasSchema(Schema):
     hide_app_name_title = fields.Boolean()
     ignore_source = fields.String()  # list of number
     closing_page_after_csat_submitted = fields.Boolean()
+    emoji_type = fields.String()
 
 
 class AppConfigSchema(Schema):
