@@ -1,5 +1,6 @@
 from marshmallow import Schema, fields, validate, validates_schema, ValidationError, validates
 from .utils.enums import EmojiRatingType
+import re
 
 
 class ConfigExtrasSchema(Schema):
@@ -21,6 +22,20 @@ class ConfigExtrasSchema(Schema):
     ignore_source = fields.String()  # list of number
     closing_page_after_csat_submitted = fields.Boolean()
     emoji_type = fields.String()
+
+    @validates_schema
+    def hex_color_format(self, data, **kwargs):
+        if data['font_color'] is not None:
+            if not re.match("#(?:[0-9a-fA-F]{3}){1,2}", data['font_color']):
+                raise ValidationError(
+                    "Invalid color hex format"
+                )
+
+        if data['color'] is not None:
+            if not re.match("#(?:[0-9a-fA-F]{3}){1,2}", data['color']):
+                raise ValidationError(
+                    "Invalid color hex format"
+                )
 
 
 class AppConfigSchema(Schema):
