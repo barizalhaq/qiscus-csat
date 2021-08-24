@@ -63,7 +63,8 @@ def attach_app():
 @v2.route('/app', methods=["GET"])
 @authenticated_app
 def get_app(app):
-    protocol = 'https://' if request.is_secure else 'http://'
+    protocol = 'https://' if request.is_secure or os.getenv(
+        'FORCE_HTTPS') else 'http://'
     host = request.host.split(':', 1)[0]
     token = jwt.encode({'app_code': app.app_code}, key=os.getenv(
         'CSAT_ADD_ON_SIGNATURE_KEY'), algorithm='HS256')
@@ -74,7 +75,7 @@ def get_app(app):
         'extras': app.config.extras if app.config.extras is not None else {},
         'csat_page': app.config.csat_page if app.config.csat_page is not None else None,
         'rating_type': app.config.rating_type.name if app.config.rating_type is not None else None,
-        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config.rating_type is not None and app.config.rating_total is not None else None
+        'preview_url': '{}{}/{}/preview'.format(protocol, host, token) if app.config.rating_type is not None else None
     }
 
     data['media_url'] = {}
@@ -105,6 +106,10 @@ def create_app_config(app):
 
 def update_app_config(app):
     json_input = request.get_json(force=True)
+    if app.config.rating_type == RatingType.EMOJI:
+        existing_extras = json.loads(app.config.extras)
+        json_input['emoji_type'] = existing_extras['emoji_type']
+
     try:
         inputs = config_app_schema.load(json_input)
 
@@ -119,7 +124,7 @@ def update_app_config(app):
             'errors': err.messages
         }, HTTPStatus.UNPROCESSABLE_ENTITY
 
-    if app.config.rating_type == RatingType.EMOJI and 'emoji_type' in inputs:
+    if inputs['rating_type'] == 'emoji':
         inputs['extras']['emoji_type'] = inputs['emoji_type']
 
     if 'extras' in inputs and inputs['extras'] is not None:
