@@ -26,13 +26,13 @@ class ConfigExtrasSchema(Schema):
     @validates_schema
     def hex_color_format(self, data, **kwargs):
         if 'font_color' in data and data['font_color'] is not None:
-            if not re.match("#(?:[0-9a-fA-F]{3}){1,2}", data['font_color']):
+            if not re.match("^#(?:[0-9a-fA-F]{3}){1,2}$", data['font_color']):
                 raise ValidationError(
                     "Invalid color hex format"
                 )
 
         if 'color' in data and data['color'] is not None:
-            if not re.match("#(?:[0-9a-fA-F]{3}){1,2}", data['color']):
+            if not re.match("^#(?:[0-9a-fA-F]{3}){1,2}$", data['color']):
                 raise ValidationError(
                     "Invalid color hex format"
                 )
