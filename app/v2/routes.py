@@ -159,12 +159,22 @@ def update_app_config(app):
 def upload_background(app):
     request_file = request.files['file']
 
+    request_file.seek(0, os.SEEK_END)
+    file_length = request_file.tell()
+
     s3_resource = s3_session.resource('s3')
     bucket = s3_resource.Bucket(os.environ.get("S3_BUCKET"))
 
+    splitted = request_file.filename.split(".")
+    extension = request_file.filename.split(".")[len(splitted) - 1]
+
+    if not validate_media_file(extension, file_length):
+        return {
+            'message': 'Invalid file. File extension must be either jpg, png, or jpeg and allowed maximum file size is 5MB',
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
+
     try:
-        splitted = request_file.filename.split(".")
-        extension = request_file.filename.split(".")[len(splitted) - 1]
         bucket.Object(
             f"add_on-csat-{app.app_code}_background.{extension}").put(Body=request_file)
     except ClientError:
@@ -199,12 +209,22 @@ def upload_background(app):
 def upload_logo(app):
     request_file = request.files['file']
 
+    request_file.seek(0, os.SEEK_END)
+    file_length = request_file.tell()
+
     s3_resource = s3_session.resource('s3')
     bucket = s3_resource.Bucket(os.environ.get("S3_BUCKET"))
 
+    splitted = request_file.filename.split(".")
+    extension = request_file.filename.split(".")[len(splitted) - 1]
+
+    if not validate_media_file(extension, file_length):
+        return {
+            'message': 'Invalid file. File extension must be either jpg, png, or jpeg and allowed maximum file size is 5MB',
+            'status': HTTPStatus.UNPROCESSABLE_ENTITY
+        }, HTTPStatus.UNPROCESSABLE_ENTITY
+
     try:
-        splitted = request_file.filename.split(".")
-        extension = request_file.filename.split(".")[len(splitted) - 1]
         bucket.Object(
             f"add_on-csat-{app.app_code}_logo.{extension}").put(Body=request_file)
     except ClientError:
@@ -247,9 +267,21 @@ def delete_media(app):
 
         config_extras = json.loads(app.config.extras)
         if 'background' in file_key:
-            del config_extras['media']['background']
+            if 'media' in config_extras and 'background' in config_extras['media']:
+                del config_extras['media']['background']
+            else:
+                return {
+                    'message': 'Uploaded background media doesn\'t exist',
+                    'status': HTTPStatus.UNPROCESSABLE_ENTITY
+                }, HTTPStatus.UNPROCESSABLE_ENTITY
         if 'logo' in file_key:
-            del config_extras['media']['logo']
+            if 'media' in config_extras and 'logo' in config_extras['media']:
+                del config_extras['media']['logo']
+            else:
+                return {
+                    'message': 'Uploaded logo media doesn\'t exist',
+                    'status': HTTPStatus.UNPROCESSABLE_ENTITY
+                }, HTTPStatus.UNPROCESSABLE_ENTITY
 
         app.config.extras = json.dumps(config_extras)
         app.update()
@@ -274,3 +306,9 @@ def set_resolve_webhook(app, webhook_url):
     multichannel.set_mark_as_resolved_webhook(
         webhook_url=webhook_url,
         is_enable=True)
+
+def validate_media_file(ext, size):
+    allowed_ext = ['jpg', 'png', 'jpeg']
+    allowed_size = 1024 * 1024 * 5
+
+    return ext in allowed_ext and size <= allowed_size
