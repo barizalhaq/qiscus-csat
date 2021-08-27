@@ -137,7 +137,7 @@ def update_app_config(app):
 
     app.update()
 
-    if app.config.rating_type is not None and app.config.rating_total is not None:
+    if app.config.rating_type is not None:
         protocol = 'https://' if request.is_secure or os.getenv(
             'FORCE_HTTPS') else 'http://'
         host = request.host.split(':', 1)[0]
