@@ -11,7 +11,7 @@
 
     {% if 'greetings' not in extras %}
     <h5 class="text-center" style="margin-bottom: 50px">
-      Hanya kurang dari 1 menit, saran dan masukan {{app.app_name}} Partner
+      Hanya kurang dari 1 menit, saran dan masukan {{ extras['customer_wording'] }}
       sangat berarti bagi kami untuk terus dapat melakukan peningkatan pelayanan
       yang lebih baik lagi. Mohon berikan penilaian atas pelayanan
       {{app.app_name}}.
@@ -38,7 +38,7 @@
       extras['disable_rating_instruction'] %}
       <h5 class="text-center">
         Dari skala 1 – {{app.config.rating_total}}, berapa nilai yang
-        {{app.app_name}} Partner berikan atas keseluruhan pengalaman
+        {{ extras['customer_wording'] }} berikan atas keseluruhan pengalaman
         pelayanan bersama {{app.app_name}} (1 = buruk sekali,
         {{app.config.rating_total}} = baik sekali)
       </h5>
@@ -120,7 +120,7 @@
         extras['additional_comment_instruction']|safe }} {% endif %} {% if
         'custom_comment_wording' not in extras %}
         <h5>
-          Mohon kesediaan {{app.app_name}} Partner untuk memberikan saran
+          Mohon kesediaan {{ extras['customer_wording'] }} untuk memberikan saran
           perbaikan atas pelayanan {{app.app_name}}.
         </h5>
         {% endif %} {% if 'custom_comment_wording' in extras %} {{
