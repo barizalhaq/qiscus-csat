@@ -159,16 +159,13 @@ def update_app_config(app):
 def upload_background(app):
     request_file = request.files['file']
 
-    request_file.seek(0, os.SEEK_END)
-    file_length = request_file.tell()
-
     s3_resource = s3_session.resource('s3')
     bucket = s3_resource.Bucket(os.environ.get("S3_BUCKET"))
 
     splitted = request_file.filename.split(".")
     extension = request_file.filename.split(".")[len(splitted) - 1]
 
-    if not validate_media_file(extension, file_length):
+    if not validate_media_file(extension, request.headers['Content-Length']):
         return {
             'message': 'Invalid file. File extension must be either jpg, png, or jpeg and allowed maximum file size is 5MB',
             'status': HTTPStatus.UNPROCESSABLE_ENTITY
@@ -209,16 +206,13 @@ def upload_background(app):
 def upload_logo(app):
     request_file = request.files['file']
 
-    request_file.seek(0, os.SEEK_END)
-    file_length = request_file.tell()
-
     s3_resource = s3_session.resource('s3')
     bucket = s3_resource.Bucket(os.environ.get("S3_BUCKET"))
 
     splitted = request_file.filename.split(".")
     extension = request_file.filename.split(".")[len(splitted) - 1]
 
-    if not validate_media_file(extension, file_length):
+    if not validate_media_file(extension, request.headers['Content-Length']):
         return {
             'message': 'Invalid file. File extension must be either jpg, png, or jpeg and allowed maximum file size is 5MB',
             'status': HTTPStatus.UNPROCESSABLE_ENTITY
@@ -311,4 +305,4 @@ def validate_media_file(ext, size):
     allowed_ext = ['jpg', 'png', 'jpeg']
     allowed_size = 1024 * 1024 * 5
 
-    return ext in allowed_ext and size <= allowed_size
+    return ext in allowed_ext and int(size) <= allowed_size
