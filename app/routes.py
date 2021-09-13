@@ -291,7 +291,7 @@ def csat_submit():
     if csat.app.config.extras:
         extras = json.loads(csat.app.config.extras)
 
-        if rating.isdigit() and 'rating_min_fb' in extras:
+        if rating.isdigit() and 'rating_min_fb' in extras and extras['rating_min_fb'] > 0:
             if int(rating) <= extras['rating_min_fb'] and feedback.strip() == "":  # noqa
                 flash(error_msg)
                 return redirect(
