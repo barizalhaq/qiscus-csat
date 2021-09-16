@@ -362,6 +362,8 @@ def _set_default_extras(extras, app):
 
     extras['customer_wording'] = ce['customer_wording'] if 'customer_wording' in ce else f'{app.app_name} Partner'
 
+    extras['content_vertical_scrollable'] = ce['content_vertical_scrollable'] if 'content_vertical_scrollable' in ce else False
+
     return extras
 
 
