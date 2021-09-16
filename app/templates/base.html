@@ -64,11 +64,21 @@
         background-color: #BEEEE6;
       }
 
+      {% if extras['content_vertical_scrollable'] %}
+        @media only screen and (max-width: 600px) {
+          .vertical-scrollable > .row {
+            position: absolute;
+            height: 75%;
+            overflow-y: scroll; 
+          }
+        }
+      {%endif%}
+
     </style>
     <title>{{app.app_name}} Csat</title>
   </head>
   <body>
-    <div class="container">{% block main %}{% endblock %}</div>
+    <div class="container vertical-scrollable">{% block main %}{% endblock %}</div>
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
