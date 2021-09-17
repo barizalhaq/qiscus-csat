@@ -362,6 +362,12 @@ def _set_default_extras(extras, app):
 
     extras['customer_wording'] = ce['customer_wording'] if 'customer_wording' in ce else f'{app.app_name} Partner'
 
+    extras['content_vertical_scrollable'] = ce['content_vertical_scrollable'] if 'content_vertical_scrollable' in ce else False
+
+    extras['logo_wrapper_extra_style'] = ce['logo_wrapper_extra_style'] if 'logo_wrapper_extra_style' in ce else None
+
+    extras['show_logo'] = ce['show_logo'] if 'show_logo' in ce else True
+
     return extras
 
 
