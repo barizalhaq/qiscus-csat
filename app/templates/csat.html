@@ -1,8 +1,10 @@
 {% extends "base.html" %} {% block main %}
 <div class="row mt-5">
   <div class="col-md-10 m-auto">
-    <div class="text-center mb-5">
-      <img src="{{extras['logo']}}" alt="" width="190px" />
+    <div class="text-center mb-5" style="{{ extras['logo_wrapper_extra_style'] }}">
+      {%if extras['show_logo']%}
+        <img src="{{ extras['logo'] }}" alt="" width="190px" />
+      {%endif%}
     </div>
 
     <h1 class="text-center mb-3">
